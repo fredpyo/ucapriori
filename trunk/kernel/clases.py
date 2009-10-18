@@ -27,5 +27,7 @@ class Nucleo:
                 count=0
                 pass
             if  count/len(data) >= min:
-                res.push(var)
-        return res   
+                res.append(var)
+        return res
+    def combiantorial(self,res=[]):
+        pass 
