@@ -1,3 +1,4 @@
+from __future__ import generators
 __version__ = "1.0"
 
 """xpermutations.py
@@ -14,7 +15,7 @@ See also: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66463
 See also: http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/66465
 """
 
-from __future__ import generators
+
 
 def xcombinations(items, n):
     if n==0: yield []
@@ -39,7 +40,9 @@ def xselections(items, n):
 
 def xpermutations(items):
     return xcombinations(items, len(items))
-'''
+
+
+
 if __name__=="__main__":
     print "Permutations of 'love'"
     for p in xpermutations(['l','o','v','e']): print ''.join(p)
@@ -58,4 +61,4 @@ if __name__=="__main__":
 
     print
     print map(''.join, list(xpermutations('done')))
-'''    
+    
