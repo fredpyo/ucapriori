@@ -24,7 +24,7 @@ class Nucleo:
            data es toda la lista de la BD 
            min el el minimo de requerimiento 0...1 '''
         res=[]
-        for i in range(1,len(varibles)+1):
+        for i in range(1,len(varibles)):
             #generar las todas las combinaciones de varibldes de 1 a n logitud
             res.append(xuniqueCombinations(varibales,i))
             
@@ -32,20 +32,20 @@ class Nucleo:
             for i in res:
                 for j in i:
                     #si pasa la prueba de minReq
-                    #canditatos.append(j)
+                    self.canditatos.append(j)
                     pass
 
 
     def generarReglas(self):
-        res=[]
         
             #generar las todas las premutacios de caditatos de 2 logitud
         res = xcombinations(self.candidatos,2)
         for i in res:
-            for item in i[0]:
-                if item in i[1]:
-                    break
-                nueva_regla=Regla               #aqui sta mal preguntar a fede una solucion mas pythonica
+            izq=set(i[0])
+            der=set(i[1])
+    
+            if len(der&izq) == 0: #interseccion de izq y der
+                nueva_regla = Regla
                 nueva_regla.izq=i[0]
                 nueva_regla.der=i[1]
                 self.reglas.append(nueva_regla)
