@@ -8,6 +8,9 @@ Created on Nov 7, 2009
 import  wx.lib.filebrowsebutton as filebrowse
 
 from wxjikken.aerowizard import *
+from data import SQLDataSource
+
+data = {}
 
 class Page_DataOrigin(AeroPage):
     '''
@@ -49,52 +52,84 @@ class DatabaseChoiceBook(wx.Choicebook):
     def __init__(self, parent, id):
         wx.Choicebook.__init__(self, parent, id, size=(-1, 500))
 
-        
+        self.panels = []
         # postgresql
-        panel = wx.Panel(self)
-        panel.SetBackgroundColour("#ffffff")
-        panel.fields = {}
+        self.panels.append(wx.Panel(self))
+        self.panels[0].SetBackgroundColour("#ffffff")
+        self.panels[0].fields = {}
         # host, port, db, user, password
-        panel.fields['host'] = wx.TextCtrl(panel, -1, "localhost", size=(150, -1))
-        panel.fields['port'] = wx.TextCtrl(panel, -1, "5432", size=(75, -1))
-        panel.fields['db'] = wx.TextCtrl(panel, -1, "", size=(220, -1))
-        panel.fields['user'] = wx.TextCtrl(panel, -1, "", size=(220, -1))
-        panel.fields['pass'] = wx.TextCtrl(panel, -1, "", size=(220, -1), style=wx.TE_PASSWORD)
+        self.panels[0].fields['host'] = wx.TextCtrl(self.panels[0], -1, "localhost", size=(150, -1))
+        self.panels[0].fields['port'] = wx.TextCtrl(self.panels[0], -1, "5432", size=(75, -1))
+        self.panels[0].fields['db'] = wx.TextCtrl(self.panels[0], -1, "", size=(220, -1))
+        self.panels[0].fields['user'] = wx.TextCtrl(self.panels[0], -1, "", size=(220, -1))
+        self.panels[0].fields['pass'] = wx.TextCtrl(self.panels[0], -1, "", size=(220, -1), style=wx.TE_PASSWORD)
         #layout
         vs = wx.BoxSizer(wx.VERTICAL)
-        panel.SetSizer(vs)
+        self.panels[0].SetSizer(vs)
         hs = wx.BoxSizer(wx.HORIZONTAL)
-        hs.Add(wx.StaticText(panel, -1, "Host:"))
-        hs.Add(panel.fields['host'], 0, wx.RIGHT, 5)
-        hs.Add(wx.StaticText(panel, -1, "Puerto:"))
-        hs.Add(panel.fields['port'], 0, wx.RIGHT, 5)
+        hs.Add(wx.StaticText(self.panels[0], -1, "Host:"))
+        hs.Add(self.panels[0].fields['host'], 0, wx.RIGHT, 5)
+        hs.Add(wx.StaticText(self.panels[0], -1, "Puerto:"))
+        hs.Add(self.panels[0].fields['port'], 0, wx.RIGHT, 5)
         vs.Add(hs, 0, wx.BOTTOM, 5)
         hs = wx.BoxSizer(wx.HORIZONTAL)
-        hs.Add(wx.StaticText(panel, -1, "Base de Datos:"))
-        hs.Add(panel.fields['db'])
+        hs.Add(wx.StaticText(self.panels[0], -1, "Base de Datos:"))
+        hs.Add(self.panels[0].fields['db'])
         vs.Add(hs, 0, wx.BOTTOM, 5)
         hs = wx.BoxSizer(wx.HORIZONTAL)
-        hs.Add(wx.StaticText(panel, -1, "Usuario:"))
-        hs.Add(panel.fields['user'])
+        hs.Add(wx.StaticText(self.panels[0], -1, "Usuario:"))
+        hs.Add(self.panels[0].fields['user'])
         vs.Add(hs, 0, wx.BOTTOM, 5)
         hs = wx.BoxSizer(wx.HORIZONTAL)
-        hs.Add(wx.StaticText(panel, -1, u"Contraseña:"))
-        hs.Add(panel.fields['pass'])
+        hs.Add(wx.StaticText(self.panels[0], -1, u"Contraseña:"))
+        hs.Add(self.panels[0].fields['pass'])
         vs.Add(hs, 0, wx.BOTTOM, 5)
-        self.AddPage(panel, "PostgreSQL")
+        self.AddPage(self.panels[0], "PostgreSQL")
            
         # sqlite
-        panel2 = wx.Panel(self)
-        panel2.SetBackgroundColour("#ffffff")
-        panel2.fields = {}
+        self.panels.append(wx.Panel(self))
+        self.panels[1].SetBackgroundColour("#ffffff")
+        self.panels[1].fields = {}
         # file
-        panel2.fields['file'] = filebrowse.FileBrowseButton(panel2, -1, labelText= "Archivo:", buttonText="Seleccionar...", dialogTitle="Seleccione en archivo base de datos SQLite", fileMode = wx.OPEN, toolTip = u"Archivo de base de datos SQLite3 del cual se extraerán los datos.", startDirectory=wx.StandardPaths.Get().GetDocumentsDir(), fileMask="SQLite (*.db)|*.db|Todos|*.*")
+        self.panels[1].fields['db'] = filebrowse.FileBrowseButton(self.panels[1], -1, labelText= "Archivo:", buttonText="Seleccionar...", dialogTitle="Seleccione en archivo base de datos SQLite", fileMode = wx.OPEN, toolTip = u"Archivo de base de datos SQLite3 del cual se extraerán los datos.", startDirectory=wx.StandardPaths.Get().GetDocumentsDir(), fileMask="SQLite (*.db)|*.db|Todos|*.*")
         #layout
         vs = wx.BoxSizer(wx.VERTICAL)
-        panel2.SetSizer(vs)
+        self.panels[1].SetSizer(vs)
         
-        vs.Add(panel2.fields['file'], 1, wx.EXPAND)
-        self.AddPage(panel2, "SQLite3")         
+        vs.Add(self.panels[1].fields['db'], 1, wx.EXPAND)
+        self.AddPage(self.panels[1], "SQLite3")         
+
+        self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGED, self.OnPageChanged)
+        self.Bind(wx.EVT_CHOICEBOOK_PAGE_CHANGING, self.OnPageChanging)
+
+    def OnPageChanged(self, event):
+        sel = self.GetSelection()
+        event.Skip()
+
+    def OnPageChanging(self, event):
+        sel = self.GetSelection()
+        event.Skip()
+        
+    def GetValues(self):
+        '''
+        Retorna los valores relevantes del choice book dependiendo de la selección actual.
+        BONUS: Ya retorna un string formateado para sqlalchemy.
+        '''
+        sel = self.GetSelection()
+        val = {}
+        if sel == 0:
+            val['name'] = 'postgres'
+        else:
+            val['name'] = 'sqlite'
+        val['parameters'] = {}
+        for k,v in self.panels[sel].fields.iteritems():
+            val['parameters'].setdefault(k,v.GetValue())
+        
+        if val['name'] == 'sqlite':
+            val['sqlalchemy_string'] = "sqlite:///%s" % val['parameters']['db']
+        else:
+            val['sqlalchemy_string'] = "%s://%s:%s@%s:%s/%s" % (val['name'], val['parameters']['user'], val['parameters']['pass'], val['parameters']['host'], val['parameters']['port'], val['parameters']['db'])
+        return val
         
         
 class Page_DatabaseSelector(AeroPage):
@@ -113,10 +148,52 @@ class Page_DatabaseSelector(AeroPage):
         self.combo_db = wx.ComboBox(self, -1, "seleccione...", (15, 30), wx.DefaultSize, basesdedatos, wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
         self.content.Add(self.combo_db, 0, wx.ALL, 10)
         """
-        test = wx.Panel(self)
-        database_choice_book = DatabaseChoiceBook(self, -1)
-        self.content.Add(database_choice_book, 0, wx.EXPAND)
+        self.database_choice_book = DatabaseChoiceBook(self, -1)
+        self.content.Add(self.database_choice_book, 0, wx.EXPAND)
         
+        b = wx.BitmapButton(self, -1, wx.Bitmap("ui/img/database.png", wx.BITMAP_TYPE_PNG))
+        self.Bind(wx.EVT_BUTTON, self.Test, b)
+        self.content.Add(b)
+
         #test.Layout() # distribute the window's new content
         #test.Fit() # fit the size of the wizard window
         #self.wizard.Center() # center :P
+    
+    def OnNext(self):
+        print data
+        data.update(self.database_choice_book.GetValues())
+        print data
+        return True
+    
+    def Test(self, event):
+        print self.database_choice_book.GetValues()
+        
+        
+class Page_Connecting(AeroPage):
+    '''
+    Página intermedia para la conexión a la base de datos...
+    '''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Conectando a base de datos")
+        
+        text = AeroStaticText(self, -1, u"Intendando abrir una conexión con la base de datos %s" % "xxxxxxxxxx")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.gauge = wx.Gauge(self, -1, 50)
+        self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
+
+    def OnShow(self, event):
+        if event.GetShow():
+            data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
+            data['source'].connect()
+            print data['source'].get_tables()
+
+class Page_Refine(AeroPage):
+    '''
+    Página donde el usuario selecciona que datos va a recorrer con el algoritmo de Apriori
+    '''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Seleccione datos a procesar")
+        
+        text = AeroStaticText(self, -1, u"Se han procesado %d tablas de su base de datos, seleccione las tablas sobre las que quiere operar" % 0)
+        self.content.Add(text, 0, wx.BOTTOM, 10)
