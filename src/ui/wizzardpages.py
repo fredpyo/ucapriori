@@ -250,7 +250,7 @@ class Page_TableSelector(AeroPage):
             #self.table_list.Set(tables)
             self.table_list.Set([])
             for t in data['source'].get_tables():
-                self.table_list.Append(t.table_name, t)
+                self.table_list.Append(t.__table__.name, t)
             
     def OnNext(self):
         return data['selected']['table'] != None
@@ -276,5 +276,5 @@ class Page_ColumnSelector(AeroPage):
         if event.GetShow():
             print data['selected']['table']
             print dir(data['selected']['table'])
-            columns = [c.name for c in data['selected']['table']._source_table.columns]
+            columns = [c.name for c in data['selected']['table'].__table__.columns]
             self.column_list.Set(columns)
