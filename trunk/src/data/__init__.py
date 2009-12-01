@@ -42,8 +42,5 @@ class SQLDataSource(object):
         '''
         Retorna una lista de tablas
         '''
-        return self.metadata.sorted_tables
-        
-        
-        
-        
+        return self.entities.itervalues()
+        #return self.metadata.sorted_tables
