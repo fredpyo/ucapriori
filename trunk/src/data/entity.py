@@ -14,8 +14,7 @@ def EntityFactory(table=None):
     '''Crear una nueva clase automágicamente'''
     e = type.__new__(type, str("Entity "+table.name), (Entity,), {})
     # almacenar la tabla a la que hace referencia
-    e.table_name = table.name
-    e._source_table = table
+    e.__table__ = table
     # almacenar la lista de campos que son relevantes para esta entidad, como lo son los PK y campos UNIQUE
     e.relevant_columns = []
     for c in table.columns:
