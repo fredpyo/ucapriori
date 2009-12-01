@@ -10,7 +10,7 @@ import  wx.lib.filebrowsebutton as filebrowse
 from wxjikken.aerowizard import *
 from data import SQLDataSource
 
-data = {}
+data = {'selected':{'table':None, 'columns':None}}
 
 class Page_DataOrigin(AeroPage):
     '''
@@ -186,14 +186,56 @@ class Page_Connecting(AeroPage):
         if event.GetShow():
             data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
             data['source'].connect()
-            print data['source'].get_tables()
 
-class Page_Refine(AeroPage):
+
+class Page_TableSelector(AeroPage):
     '''
-    Página donde el usuario selecciona que datos va a recorrer con el algoritmo de Apriori
+    Página donde el usuario selecciona de que tabla se seleccionaran los datos
     '''
     def __init__(self, parent):
         AeroPage.__init__(self, parent, u"Seleccione datos a procesar")
         
-        text = AeroStaticText(self, -1, u"Se han procesado %d tablas de su base de datos, seleccione las tablas sobre las que quiere operar" % 0)
+        text = AeroStaticText(self, -1, u"Seleccione una de las siguientes tablas")
         self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.table_list = wx.ListBox(self, -1, (-1, -1), (400,200), [])
+        self.content.Add(self.table_list, 0, wx.EXPAND | wx.ALL, 10)
+        
+        self.table_list.Bind(wx.EVT_LISTBOX, self.OnListSelection)
+
+    def OnListSelection(self, event):
+        data['selected']['table'] = event.GetClientData()
+
+    def OnShow(self, event):
+        if event.GetShow():
+            #tables = [t.table_name for t in data['source'].get_tables()]
+            #self.table_list.Set(tables)
+            self.table_list.Set([])
+            for t in data['source'].get_tables():
+                self.table_list.Append(t.table_name, t)
+            
+    def OnNext(self):
+        return data['selected']['table'] != None
+
+    def OnPrev(self):
+        data['selected']['table'] = None
+            
+class Page_ColumnSelector(AeroPage):
+    '''
+    Página donde el usuario selecciona de que columnas de la tabla seleccionada se quitarna los datos
+    '''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Seleccione datos a procesar")
+        
+        text = AeroStaticText(self, -1, u"Seleccione una de las siguientes tablas")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.column_list = wx.CheckListBox(self, -1, (-1, -1), (400,200), [])
+        self.content.Add(self.column_list, 0, wx.EXPAND | wx.ALL, 10)
+        
+    def OnShow(self, event):
+        if event.GetShow():
+            print data['selected']['table']
+            print dir(data['selected']['table'])
+            columns = [c.name for c in data['selected']['table']._source_table.columns]
+            self.column_list.Set(columns)
