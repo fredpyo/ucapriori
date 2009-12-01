@@ -6,6 +6,7 @@ Created on Nov 7, 2009
 '''
 
 import  wx.lib.filebrowsebutton as filebrowse
+import wx.lib.delayedresult as delayedresult
 
 from wxjikken.aerowizard import *
 from data import SQLDataSource
@@ -181,11 +182,48 @@ class Page_Connecting(AeroPage):
         
         self.gauge = wx.Gauge(self, -1, 50)
         self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        # gague timer
+        self.Bind(wx.EVT_TIMER, self.TimerHandler)
+        self.timer = wx.Timer(self)
+        # threading
+        self.abort_event = delayedresult.AbortEvent()
+
+    def TimerHandler(self, event):
+        self.gauge.Pulse()
+
+    def OnNext(self):
+        self.timer.Stop()
+        return True
+    
+    def OnPrev(self):
+        self.timer.Stop()
+        return True
 
     def OnShow(self, event):
         if event.GetShow():
-            data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
-            data['source'].connect()
+            self.abort_event.clear()
+            self.worker = delayedresult.startWorker(self._Consumer, self._ConnectWorker, wargs=(10,self.abort_event), jobID=10)
+            self.timer.Start(50)
+
+    def _Consumer(self, delayedResult):
+        jobID = delayedResult.getJobID()
+        try:
+            connect_success = delayedResult.get()
+        except Exception, exc:
+            wx.MessageBox(u"Error de conexión:\n%s" % exc, u"Error de Conexión", wx.OK | wx.ICON_ERROR, self)
+            #print "Error thread: %d expection: %s" % (jobID, exc)
+            connect_success = False 
+        if connect_success:
+            self.GoToNext()
+        else:
+            self.GoToPrev()
+
+    def _ConnectWorker(self, jobID, abortEvent):
+        data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
+        data['source'].connect()
+        print dir(data['source'])
+        return True
+
 
 
 class Page_TableSelector(AeroPage):
@@ -219,7 +257,8 @@ class Page_TableSelector(AeroPage):
 
     def OnPrev(self):
         data['selected']['table'] = None
-            
+
+
 class Page_ColumnSelector(AeroPage):
     '''
     Página donde el usuario selecciona de que columnas de la tabla seleccionada se quitarna los datos
