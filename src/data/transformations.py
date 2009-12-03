@@ -28,7 +28,7 @@ class Transformer(object):
                     raise Exception(u'Cada regla debe contener 3 elementos, esta tiene %d' % len(rule))
                 elif rule[0] not in ['==', '!=', '<', '<=', '>', '>=']:
                     raise Exception(u"El primer elemento de la lista debe ser uno de los siguientes valures: '==' | '!=' | '<' | '<=' | '>' | '>='. Se encontró %s" % rule[0])
-                elif type(rule[1]) not in [long, float, int, string, unicode]:
+                elif type(rule[1]) not in [long, float, int, str, unicode]:
                     raise Exception(u"El tipo de dato de la segundo y tercera parte de la regla debe ser uno de los siguientes: long, float, int, string, unicode. Se encontraron %s, %s" % (str(type(rule[1])), str(type(rule[2]))))
         # todo ok :)
         self.rules = rules
@@ -50,7 +50,7 @@ class Transformer(object):
         # al comenzar no tenemos un nuevo valor, o un valor que concuerde con las reglas
         new_value = None
         # iteramos sobre las reglas
-        for rule in rules:
+        for rule in self.rules:
             # convierte la regla en una condición ejecutable, algo como:
             # value == 231
             # que es interpretado por eval y retorna True o False
