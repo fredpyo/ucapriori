@@ -27,5 +27,8 @@ page_tablesel.Chain({"database":page_colsel})
 
 # init and run wizard
 wizard.start_page = page1
+ib = wx.IconBundle()
+ib.AddIconFromFile("ui/img/applications-engineering.ico", wx.BITMAP_TYPE_ANY)
+wizard.SetIcons(ib)
 wizard.RunWizzard()
 
