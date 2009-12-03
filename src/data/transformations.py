@@ -33,7 +33,7 @@ class Transformer(object):
         # todo ok :)
         self.rules = rules
     
-    def convert_value(self, value):
+    def transform_value(self, value):
         '''
         Convertir un valor según las reglas
         Este método itera sobre las reglas con las que se inicializó la clase
@@ -63,7 +63,7 @@ class Transformer(object):
         else:
             return value
     
-    def convert_values(self, values):
+    def transform_values(self, values):
         '''
         Convertir de a muchos, retorna una lista de valores
         Recorre todos los valores y aplica a cada valor la función convert_value de esta misma clase
