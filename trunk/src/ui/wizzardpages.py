@@ -2,16 +2,17 @@
 '''
 Created on Nov 7, 2009
 
-@author: fede
+@author: Federico Cáceres <fede.caceres@gmail.com>
 '''
 
 import wx
-import wx.grid
 import  wx.lib.filebrowsebutton as filebrowse
 import wx.lib.delayedresult as delayedresult
 
-from wxjikken.aerowizard import *
 from data import SQLDataSource
+from data.gridtables import PreviewTable, TransformationTable
+from data.transformations import Transformer
+from wxjikken.aerowizard import *
 
 data = {'selected':{'table':None, 'columns':None}}
 
@@ -238,8 +239,8 @@ class Page_TableSelector(AeroPage):
         text = AeroStaticText(self, -1, u"Seleccione una de las siguientes tablas")
         self.content.Add(text, 0, wx.BOTTOM, 10)
         
-        self.table_list = wx.ListBox(self, -1, (-1, -1), (400,200), [])
-        self.content.Add(self.table_list, 0, wx.EXPAND | wx.ALL, 10)
+        self.table_list = wx.ListBox(self, -1, (0, 0), (400,200), [])
+        self.content.Add(self.table_list, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         self.table_list.Bind(wx.EVT_LISTBOX, self.OnListSelection)
 
@@ -272,21 +273,29 @@ class Page_ColumnSelector(AeroPage):
         self.content.Add(self.text_instructions, 0, wx.BOTTOM, 10)
         
         h = wx.BoxSizer(wx.HORIZONTAL)
-        self.content.Add(h, 0, wx.EXPAND, 0)
+        self.content.Add(h, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         self.column_list = wx.CheckListBox(self, -1, (-1, -1), (120,200), [])
-        h.Add(self.column_list, 0, wx.EXPAND | wx.ALL, 10)
+        h.Add(self.column_list, 0, wx.EXPAND | wx.RIGHT, 10)
 
         hv = wx.BoxSizer(wx.VERTICAL)
         h.Add(hv, 1, wx.EXPAND, 0)
-        self.transformations_grid = wx.grid.Grid(self)
-        hv.Add(self.transformations_grid, 1, wx.EXPAND)
+
+        self.text_indique = AeroStaticText(self, -1, u"Indique las reglas de transformación que desea aplicar sobre esta columna.")
+        hv.Add(self.text_indique)
+        self.transformations_grid = wx.grid.Grid(self, -1, (-1, -1), (500, 300))
+        hv.Add(self.transformations_grid, 0, wx.EXPAND)
+        text = AeroStaticText(self, -1, u"NOTA: Si un valor no coincide con ninguna de las reglas, el mismo quedará igual.")
+        hv.Add(text, 0, wx.TOP | wx.BOTTOM, 5)
         
         hvh = wx.BoxSizer(wx.HORIZONTAL)
         button_add = wx.Button(self, -1, "Agregar")
         button_remove = wx.Button(self, -1, "Quitar")
+        self.button_preview = wx.ToggleButton(self, -1, "Previsualizar")
         hvh.Add(button_add, 0, 0)
         hvh.Add(button_remove, 0, 0)
+        hvh.AddStretchSpacer(1)
+        hvh.Add(self.button_preview, 0, wx.ALIGN_RIGHT, 0)
         hv.Add(hvh, 0, wx.EXPAND, 0)
         
         # clics en el lista
@@ -294,13 +303,16 @@ class Page_ColumnSelector(AeroPage):
         # clics en los botones
         self.Bind(wx.EVT_BUTTON, self.OnAddRule, button_add)
         self.Bind(wx.EVT_BUTTON, self.OnRemoveRule, button_remove)
+        self.Bind(wx.EVT_TOGGLEBUTTON, self.OnTogglePreview, self.button_preview)
 
     def OnShow(self, event):
         if event.GetShow():
+            
             column_count = data['source'].session.query(data['selected']['table']).count()
             self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].__table__.name))
             
             columns = [c.name for c in data['selected']['table'].__table__.columns]
+            self.column_list.SetSelection(0, False)
             self.column_list.Set(columns)
             # inicializar tablas de transformación
             data['transformation_tables'] = {}
@@ -311,14 +323,22 @@ class Page_ColumnSelector(AeroPage):
             dummy_data.data = []
             self.transformations_grid.SetTable(dummy_data, True)
             self.transformations_grid.SetColSize(2, 200)
-            
             self.wizard.LayoutFitCenter()
+            self.dummy_panel = wx.Panel(self, -1, self.transformations_grid.GetPosition(), self.transformations_grid.GetSize())
+
             
     def OnSelect(self, event):
-        print event.GetString()
-        self.transformations_grid.SetTable(data['transformation_tables'][event.GetString()], False)
-        self.transformations_grid.SetColSize(2, 200)
-        self.transformations_grid.Refresh()
+        if event.GetString():
+            self.button_preview.SetValue(False)
+            
+            self.text_indique.SetLabel(u"Indique las reglas de transformación que desea aplicar sobre la columna <%s>." % event.GetString())
+            
+            self.transformations_grid.Show()
+            self.dummy_panel.Hide()
+            self.dummy_panel.Parent.Refresh()
+            self.transformations_grid.SetTable(data['transformation_tables'][event.GetString()], False)
+            self.transformations_grid.SetColSize(2, 200)
+            self.transformations_grid.Refresh()
             
     def OnAddRule(self, event):
         self.transformations_grid.AppendRows(1)
@@ -328,70 +348,23 @@ class Page_ColumnSelector(AeroPage):
         for row in self.transformations_grid.GetSelectedRows(): 
             self.transformations_grid.DeleteRows(row)
             
+    def OnTogglePreview(self, event):
+        from sqlalchemy.sql import select
+        
+        if event.IsChecked():
+            print "Change table"
             
-class TransformationTable(wx.grid.PyGridTableBase):
-    def __init__(self):
-        wx.grid.PyGridTableBase.__init__(self)
-        self.data = [
-                     [u'==', u'1', u"categoría"],
-        ]
-        
-        self.column_labels = [u"Condición", u"Valor", u"Mapea a valor"]
-        self.column_datatypes = [wx.grid.GRID_VALUE_CHOICE + ':==,!=,<,<=,>,>=', wx.grid.GRID_VALUE_STRING, wx.grid.GRID_VALUE_STRING]
-        
-    # --------------------------------
-    # the following are required by PyGridTableBase
-    
-    def GetNumberRows(self):
-        print "Table length %d" % len(self.data)
-        return len(self.data)
-    
-    def GetNumberCols(self):
-        return 3
-    
-    def IsEmptyCell(self, row, col):
-        if row > len(self.data) - 1:
-            return True
+            query = select([data['selected']['table'].__table__])
+            conn = data['source'].engine.connect()
+            
+            
+            rules = self.transformations_grid.GetTable().GetRules() 
+            values = [row[self.column_list.GetStringSelection()] for row in conn.execute(query)]
+            self.transformations_grid.SetTable(PreviewTable(rules, values), True)
+            #self.transformations_grid.SetColSize(2, 200)
+            self.transformations_grid.Refresh()
+            
         else:
-            return False
-        
-    def GetValue(self, row, col):
-        value = self.data[row][col]
-        return value
-    
-    def SetValue(self, row, col, value):
-        self.data[row][col] = value
-    
-    # --------------------------------
-    # optional (extra sexy) stuff
-    
-    def GetColLabelValue(self, col):
-        return self.column_labels[col]
-    
-    def GetRowLabelValue(self, row):
-        return "Regla %d" % (row + 1)
-    
-    def GetTypeName(self, row, col):
-        return self.column_datatypes[col]
-        
-    # --------------------------------
-    # behavioural stuff
-    
-    def AppendRows(self, numRows = 1):
-        self.data.append(["","",""])
-        msg = wx.grid.GridTableMessage(self, 
-                                       wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 
-                                       1 
-                                       )
-        self.GetView().ProcessTableMessage(msg) 
-        return True
-        
-    def DeleteRows(self, pos, numRows=1):
-        self.data = self.data[0:pos] + self.data[pos+1:]
-        msg = wx.grid.GridTableMessage(self, 
-                                       wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED,
-                                       pos,
-                                       numRows
-                                       )
-        self.GetView().ProcessTableMessage(msg) 
-        return True
+            print "Rever table"
+            
+            
