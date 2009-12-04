@@ -72,5 +72,5 @@ class Transformer(object):
         # iteramos sobre la lista
         for value in values:
             # y convertimos
-            converted.append(self.convert_value(value))
+            converted.append(self.transform_value(value))
         return converted 
