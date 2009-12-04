@@ -5,14 +5,20 @@ Created on Nov 7, 2009
 @author: Federico Cáceres <fede.caceres@gmail.com>
 '''
 
+from sqlalchemy.sql import select
 import wx
 import  wx.lib.filebrowsebutton as filebrowse
 import wx.lib.delayedresult as delayedresult
+
 
 from data import SQLDataSource
 from data.gridtables import PreviewTable, TransformationTable
 from data.transformations import Transformer
 from wxjikken.aerowizard import *
+
+
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
 data = {'selected':{'table':None, 'columns':None}}
 
@@ -282,7 +288,9 @@ class Page_ColumnSelector(AeroPage):
         h.Add(hv, 1, wx.EXPAND, 0)
 
         self.text_indique = AeroStaticText(self, -1, u"Indique las reglas de transformación que desea aplicar sobre esta columna.")
-        hv.Add(self.text_indique)
+        hv.Add(self.text_indique, 0, wx.BOTTOM, 5)
+        self.text_info_adicional = AeroStaticText(self, -1, u"Información adicional: < ALGO VA A DECIR ACA... ALGUN DIA >")
+        hv.Add(self.text_info_adicional, 0, wx.BOTTOM, 5)
         self.transformations_grid = wx.grid.Grid(self, -1, (-1, -1), (500, 300))
         hv.Add(self.transformations_grid, 0, wx.EXPAND)
         text = AeroStaticText(self, -1, u"NOTA: Si un valor no coincide con ninguna de las reglas, el mismo quedará igual.")
@@ -349,8 +357,6 @@ class Page_ColumnSelector(AeroPage):
             self.transformations_grid.DeleteRows(row)
             
     def OnTogglePreview(self, event):
-        from sqlalchemy.sql import select
-        
         if event.IsChecked():
             print "Change table"
             
@@ -365,6 +371,69 @@ class Page_ColumnSelector(AeroPage):
             self.transformations_grid.Refresh()
             
         else:
-            print "Rever table"
             
+            self.transformations_grid.SetTable(data['transformation_tables'][self.column_list.GetStringSelection()], False)
+            self.transformations_grid.SetColSize(2, 200)
+            self.transformations_grid.Refresh()
+    
+    def OnNext(self):
+        # prevenir saltar a la siguiente página si es que no hay nada seleccionado!
+        if len(self.column_list.GetChecked()) < 2:
+            return False
+        # guardar las columnas seleccionadas
+        data['selected']['columns'] = self.column_list.GetCheckedStrings()
+        return True
+            
+            
+class Page_TransformData(AeroPage):
+    '''Transforma los datos de la página anterior y los envia al algoritmo'''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Transformado datos")
+
+        text = AeroStaticText(self, -1, u"Transformando... ¡sea paciente!")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.gauge = wx.Gauge(self, -1, 50)
+        self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        # gague timer
+        self.Bind(wx.EVT_TIMER, self.TimerHandler)
+        self.timer = wx.Timer(self)
+        # threading
+        self.abort_event = delayedresult.AbortEvent()
+
+    def TimerHandler(self, event):
+        self.gauge.Pulse()
+
+    def OnShow(self, event):
+        if event.GetShow():
+            self.abort_event.clear()
+            self.worker = delayedresult.startWorker(self._Consumer, self._TransformWorker, wargs=(10,self.abort_event), jobID=10)
+            self.timer.Start(50)
+
+    def _Consumer(self, delayedResult):
+        '''Espera que se complete la transformación'''
+        jobID = delayedResult.getJobID()
+        try:
+            success = delayedResult.get()
+        except Exception, exc:
+            wx.MessageBox(u"Error de conexión:\n%s" % exc, u"Error de Conexión", wx.OK | wx.ICON_ERROR, self)
+            #print "Error thread: %d expection: %s" % (jobID, exc)
+            success = False 
+        if success:
+            self.GoToNext()
+        else:
+            self.GoToPrev()
+
+    def _TransformWorker(self, jobID, abortEvent):
+        data['transformed'] = {}
+        conn = data['source'].engine.connect()
+        for checked_column in data['selected']['columns']:
+            rules = data['transformation_tables'][checked_column].GetRules()
+            column = data['selected']['table'].__table__.columns[checked_column]
+            values = [row[0] for row in conn.execute(select([column]))]
+            transformer = Transformer(rules)
+            data['transformed'][checked_column] = transformer.transform_values(values)
+            
+        pp.pprint(data['transformed'])
+        return True
             
