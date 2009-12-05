@@ -19,7 +19,7 @@ class Nucleo:
         '''
         
         
-    def minimumReq(self,datos={},min=0.70):
+    def minimumReq(self,datos={},min=1):
         '''variables son la lista de variables = ['x1','x2','x3'....]
            data es toda la lista de la BD 
            min el el minimo de requerimiento 0...1 '''
@@ -37,23 +37,27 @@ class Nucleo:
             res.append(xuniqueCombinations(variables,i))
             
         for i in datos:
-            for j in i:
+            for j in datos[i]:
+                
                 popular.append([])
             break
+       
         for i in datos:
             for x,y in zip(datos[i],popular):
                 y.append(x)
-        print popular
+       
         for i in res:
            for j in i:
               #si pasa la prueba de minReq
               contador = 0
+              print j
               for ind in popular:
-                  if j in ind:
+                  if j == ind:
                      contador += 1
-              if (contador > (len(popular)*min)):
+              print contador ,(len(popular)*float(min))
+              if (contador > (len(popular)*float(min))):
                   self.candidatos.append(j)
-              pass
+              
 
 
     def generarReglas(self):
