@@ -44,4 +44,4 @@ prueba.generarReglas()
 
 print "las reglas"
 for i in prueba.reglas:
-    print i.imprimir()
+    i.imprimir()
