@@ -94,9 +94,10 @@ class Nucleo:
                             nueva_regla.contador_amb += 1
                     if set(nueva_regla.der)<=set(ind):
                         nueva_regla.contador_der += 1
-                nueva_regla.porcentaje = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
+                nueva_regla.confianza = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
+                nueva_regla.sensibilidad = nueva_regla.contador_amb / float(nueva_regla.contador_der)
                 
-                if nueva_regla.porcentaje > trust and nueva_regla.porcentaje > support: # minima confiaza and minimo soporte
+                if nueva_regla.confianza > trust and nueva_regla.sensibilidad > support: # minima confiaza and minima sensibilidad
                     self.reglas.append(nueva_regla)
 
 
@@ -112,13 +113,17 @@ class Regla:
     contador_izq=0
     contador_der=0
     contador_amb=0
-    porcentaje=0
+    confianza=0
+    sensibilidad=0
     
     def imprimir(self):
         print self.izq, "-->", self.der
         print "contador", self.contador_amb, "////", self.contador_izq 
-        print "% -> ", self.porcentaje
-
+        print "Confianza -> ", self.confianza
+        print "Sensibilidad -> ", self.sensibilidad
+    
+    def imprimir2(self):
+        print "%s --> %s :: Confianza=%.3f, Sensibilidad=%.3f" % (str(self.izq), str(self.der), self.confianza, self.sensibilidad)
 
 class Candidato:
     valor=[]
