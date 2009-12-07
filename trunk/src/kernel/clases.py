@@ -4,12 +4,16 @@ Created on Oct 18, 2009
 
 @author: sergio
 '''
+import datetime
+
 from xpermutations import *
 
 
 class Nucleo:
     '''
-    classdocs
+    motor responsable de analizar un conjunto de datos y aplicar el algoritmo apriori
+    para generar los items sets y consecuentemente las reglas que complan con los parametros
+    support, trust y sensibility
     '''
     candidatos=[] 
     reglas=[]
@@ -20,8 +24,7 @@ class Nucleo:
         Constructor
         '''
         
-        
-    def minimumReq(self,datos={},min=1):
+    def minimumReq(self,datos={},min=1, verbose=True):
         '''variables son la lista de variables = ['x1','x2','x3'....]
            data es toda la lista de la BD 
            min el el minimo de requerimiento 0...1 '''
@@ -30,15 +33,29 @@ class Nucleo:
         variables=[]
         popular=[]
 
+        if verbose:
+            print u"Generando item sets que complen con el soporte mínimo=%.3f" % min
+            print
+            print "Generando todos los item sets posibles..."
+            start = datetime.datetime.now()
+
         # convierte el diccionario en lista
         for i in datos: # iterar sobre las etiquetas del diccionario 
           for j in set(datos[i]):  # itera sobre los elementos unicos de cada lista
                 variables.append(j) # almacena las variables unicas en variables, las variables que entrarán en juego
           
-        #generar las todas las combinaciones de variables de 1 a n logitud        
-        for i in range(1,len(variables)):
+        # generar las todas las combinaciones de variables de 1 a n logitud        
+        for i in range(1,len(datos)):
             res.append(xuniqueCombinations(variables,i))
             
+        if verbose:
+            end = datetime.datetime.now()
+            print "Items sets posibles generados en: ", end - start
+            print ""
+
+            print "Convirtiendo los datos a la representación interna optimizada..."
+            start = datetime.datetime.now()
+
         # matriz "transversa" de los datos
         for i in datos: # iterar sobre las etiquetas del diccionario 
             for j in datos[i]: # itera sobre los elementos unicos de cada lista
@@ -49,6 +66,14 @@ class Nucleo:
         for i in datos:
             for x,y in zip(datos[i],popular):
                 y.append(x)
+        
+        if verbose:
+            end = datetime.datetime.now()
+            print "Datos convertidos a representación interna en: ", end - start
+            print ""
+
+            print "Recortando item sets que no cumplen el minimum requirement..."
+            start = datetime.datetime.now()
 
         # esto ya genera los sets que pasaron el minimum requirement 
         for i in res: # iterar sobre cada una de las combinaciones posibles
@@ -65,18 +90,37 @@ class Nucleo:
                   nuevo_candidato=Candidato(j,(float(contador)/float(len(popular))),contador)
                   self.candidatos.append(nuevo_candidato)
 
+        if verbose:
+            end = datetime.datetime.now()
+            print "%s cumplen con el minimun support, obtenidos en: " % len(self.candidatos), end - start
+            print ""
+
         # esto lo usamos luego
         self.popular=popular
 
-    def generarReglas(self, trust=0, support=0):
+    def generarReglas(self, trust=0, sensibility=0, verbose=True):
         # minimun trust
         #generar las todas las premutacios de caditatos de 2 logitud
+
+        if verbose:
+            print "Obteniendo reglas que complan con la confianza=%.3f y sensibilidad=%.3f" % (trust, sensibility)
+            print ""
+            print "Generando todas las combinaciones de reglas posibles..."
+            start = datetime.datetime.now()
         
         # se convierte los candidatos a listas
         candidatos=[]  
         for i in self.candidatos:
             candidatos.append(i.valor)
         res = xcombinations(candidatos,2) # generar todas las combinaciones de 2 candidatos
+
+        if verbose:
+            end = datetime.datetime.now()
+            print "Todas las combinaciones posibles generadas en: ", end - start
+            print ""
+
+            print "Calculando confianza y soporte de reglas"
+            start = datetime.datetime.now()
 
         for i in res:
             if len(set(i[0])&set(i[1])) == 0: # interseccion de izq y der, tienen que ser disjuntos
@@ -97,17 +141,19 @@ class Nucleo:
                 nueva_regla.confianza = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
                 nueva_regla.sensibilidad = nueva_regla.contador_amb / float(nueva_regla.contador_der)
                 
-                if nueva_regla.confianza > trust and nueva_regla.sensibilidad > support: # minima confiaza and minima sensibilidad
+                if nueva_regla.confianza > trust and nueva_regla.sensibilidad > sensibility: # minima confiaza and minima sensibilidad
                     self.reglas.append(nueva_regla)
 
+        if verbose:
+            end = datetime.datetime.now()
+            print "%d reglas generadas en: " % len(self.reglas), end - start
+            print ""
 
                 
 class Regla:
     '''
         es una clase para definir una regla del tipo ['x1','x2'] -----> ['x3','x4']
-       
     '''
-    
     izq=[]
     der=[]
     contador_izq=0
@@ -124,6 +170,7 @@ class Regla:
     
     def imprimir2(self):
         print "%s --> %s :: Confianza=%.3f, Sensibilidad=%.3f" % (str(self.izq), str(self.der), self.confianza, self.sensibilidad)
+
 
 class Candidato:
     valor=[]
