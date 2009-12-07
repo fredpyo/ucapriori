@@ -68,7 +68,7 @@ class DatabaseChoiceBook(wx.Choicebook):
         self.panels[0].SetBackgroundColour("#ffffff")
         self.panels[0].fields = {}
         # host, port, db, user, password
-        self.panels[0].fields['host'] = wx.TextCtrl(self.panels[0], -1, "localhost", size=(150, -1))
+        self.panels[0].fields['host'] = wx.TextCtrl(self.panels[0], -1, "127.0.01", size=(150, -1))
         self.panels[0].fields['port'] = wx.TextCtrl(self.panels[0], -1, "5432", size=(75, -1))
         self.panels[0].fields['db'] = wx.TextCtrl(self.panels[0], -1, "", size=(220, -1))
         self.panels[0].fields['user'] = wx.TextCtrl(self.panels[0], -1, "", size=(220, -1))
@@ -258,7 +258,9 @@ class Page_TableSelector(AeroPage):
             #tables = [t.table_name for t in data['source'].get_tables()]
             #self.table_list.Set(tables)
             self.table_list.Set([])
-            for t in data['source'].get_tables():
+            tables = [t for t in data['source'].get_tables()]
+            tables.sort(key=lambda x: x.__table__.name)
+            for t in tables:
                 self.table_list.Append(t.__table__.name, t)
             
     def OnNext(self):
