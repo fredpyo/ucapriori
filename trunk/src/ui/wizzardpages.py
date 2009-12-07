@@ -6,6 +6,7 @@ Created on Nov 7, 2009
 '''
 
 from sqlalchemy.sql import select
+import sys
 import wx
 import  wx.lib.filebrowsebutton as filebrowse
 import wx.lib.delayedresult as delayedresult
@@ -16,6 +17,9 @@ from data.gridtables import PreviewTable, TransformationTable
 from data.transformations import Transformer
 from wxjikken.aerowizard import *
 
+
+from kernel.xpermutations import *
+from kernel.clases import *
 
 import pprint
 pp = pprint.PrettyPrinter(indent=4)
@@ -322,7 +326,7 @@ class Page_ColumnSelector(AeroPage):
             self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].__table__.name))
             
             columns = [c.name for c in data['selected']['table'].__table__.columns]
-            self.column_list.SetSelection(0, False)
+            #self.column_list.SetSelection(0, False)
             self.column_list.Set(columns)
             # inicializar tablas de transformación
             data['transformation_tables'] = {}
@@ -401,7 +405,7 @@ class Page_ConfigureApriori(AeroPage):
         support = wx.StaticText(self, -1, u"Soporte")
         self.support_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=30)
         
-        blank = wx.StaticText(self, -1, u"")
+        blank2 = wx.StaticText(self, -1, u"")
         trust = wx.StaticText(self, -1, u"Confianza")
         self.trust_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=40)
         
@@ -409,7 +413,7 @@ class Page_ConfigureApriori(AeroPage):
         self.sensibility_text = wx.StaticText(self, -1, u"Sensibilidad")
         self.sensibility_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=25)
 
-        for i in [blank, support, self.support_spinner, blank, trust, self.trust_spinner, self.sensibility_check, self.sensibility_text, self.sensibility_spinner]:
+        for i in [blank, support, self.support_spinner, blank2, trust, self.trust_spinner, self.sensibility_check, self.sensibility_text, self.sensibility_spinner]:
             grid.Add(i)
 
         self.content.Add(grid, 0, wx.EXPAND | wx.BOTTOM, 10)
@@ -439,6 +443,21 @@ class Page_ConfigureApriori(AeroPage):
         return True
 
 
+class RedirectText(object):
+    '''
+    Redireccionador de print :D
+    Sacado de: http://www.blog.pythonlibrary.org/2009/01/01/wxpython-redirecting-stdout-stderr/
+    '''
+    def __init__(self,aWxTextCtrl):
+        self.out=aWxTextCtrl
+ 
+    def write(self,string):
+        # normal
+        # self.out.WriteText(string)
+        # thread-safe
+        wx.CallAfter(self.out.WriteText, string)
+
+
 class Page_ProcessData(AeroPage):
     '''Transforma los datos de la página anterior y los envia al algoritmo'''
     def __init__(self, parent):
@@ -463,12 +482,17 @@ class Page_ProcessData(AeroPage):
         self.timer = wx.Timer(self)
         # threading
         self.abort_event = delayedresult.AbortEvent()
+        
+        # redirection
+        self.redir=RedirectText(self.log)
 
     def TimerHandler(self, event):
         self.gauge.Pulse()
 
     def OnShow(self, event):
         if event.GetShow():
+            sys.stdout=self.redir
+            print "Iniciando..."
             self.abort_event.clear()
             self.worker = delayedresult.startWorker(self._Consumer, self._TransformWorker, wargs=(10,self.abort_event), jobID=10)
             self.timer.Start(50)
@@ -502,5 +526,20 @@ class Page_ProcessData(AeroPage):
             data['transformed'][checked_column] = transformer.transform_values(values)
             
         pp.pprint(data['transformed'])
+        print u"Transformación terminada..."
+        
+        print u"Iniciando algoritmo Apriori..."
+        prueba = Nucleo()
+        print u"Obteniendo sets que complen con el soporte mínimo=%.3f" % data['parameters']['support']
+        prueba.minimumReq(data['transformed'],min=data['parameters']['support'])
+        print "Sets obtenidos:"
+        for i in prueba.candidatos:
+            print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
+        
+        print "Obteniendo reglas que complan con la confianza=%.3f y sensibilidad=%.3f" % (data['parameters']['trust'], data['parameters']['sensibility'])
+        prueba.generarReglas(data['parameters']['trust'], data['parameters']['sensibility'])
+        print "Reglas generadas:"
+        for i in prueba.reglas:
+            i.imprimir2()
         return True
             
