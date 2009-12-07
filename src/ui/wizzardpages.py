@@ -6,6 +6,7 @@ Created on Nov 7, 2009
 '''
 
 from sqlalchemy.sql import select
+import os
 import sys
 import wx
 import  wx.lib.filebrowsebutton as filebrowse
@@ -490,6 +491,8 @@ class Page_ProcessData(AeroPage):
         
         # redirection
         self.redir=RedirectText(self.log)
+        
+        self.Bind(wx.EVT_BUTTON, self.OnSave, self.log_save_button)
 
     def TimerHandler(self, event):
         self.gauge.Pulse()
@@ -501,6 +504,17 @@ class Page_ProcessData(AeroPage):
             self.abort_event.clear()
             self.worker = delayedresult.startWorker(self._Consumer, self._TransformWorker, wargs=(10,self.abort_event), jobID=10)
             self.timer.Start(50)
+    
+    def OnSave(self, event):
+        dlg = wx.FileDialog(self, "Guardar log...", wx.StandardPaths.Get().GetDocumentsDir(), style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard="Archivo de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            if not os.path.splitext(filename)[1]:
+                filename = filename + ".txt"
+            f = open(filename, "w")
+            f.write(self.log.GetValue())
+            f.close()
+            
 
     def _Consumer(self, delayedResult):
         '''Espera que se complete la transformación'''
