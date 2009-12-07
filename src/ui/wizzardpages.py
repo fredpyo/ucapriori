@@ -253,9 +253,14 @@ class Page_TableSelector(AeroPage):
         self.content.Add(self.table_list, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         self.table_list.Bind(wx.EVT_LISTBOX, self.OnListSelection)
+        self.table_list.Bind(wx.EVT_LISTBOX_DCLICK, self.OnListDoubleClick)
 
     def OnListSelection(self, event):
         data['selected']['table'] = event.GetClientData()
+        
+    def OnListDoubleClick(self, event):
+        data['selected']['table'] = event.GetClientData()
+        self.GoToNext()
 
     def OnShow(self, event):
         if event.GetShow():
@@ -471,7 +476,7 @@ class Page_ProcessData(AeroPage):
         
         text = AeroStaticText(self, -1, u"Log:")
         self.content.Add(text, 0, wx.BOTTOM, 10)
-        self.log = wx.TextCtrl(self, -1, "", size=(450, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        self.log = wx.TextCtrl(self, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
         self.content.Add(self.log, 0, wx.BOTTOM, 10)
         
         self.log_save_button = wx.Button(self, -1, u"Guardar Log...")
@@ -527,16 +532,16 @@ class Page_ProcessData(AeroPage):
             
         pp.pprint(data['transformed'])
         print u"Transformación terminada..."
-        
-        print u"Iniciando algoritmo Apriori..."
+        print "----------"
+        print u"Iniciando algoritmo Apriori...\n"
         prueba = Nucleo()
-        print u"Obteniendo sets que complen con el soporte mínimo=%.3f" % data['parameters']['support']
+        # generar item sets
         prueba.minimumReq(data['transformed'],min=data['parameters']['support'])
-        print "Sets obtenidos:"
+        print "Sets generados:"
         for i in prueba.candidatos:
             print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
-        
-        print "Obteniendo reglas que complan con la confianza=%.3f y sensibilidad=%.3f" % (data['parameters']['trust'], data['parameters']['sensibility'])
+        print "----------"
+        # generar reglas
         prueba.generarReglas(data['parameters']['trust'], data['parameters']['sensibility'])
         print "Reglas generadas:"
         for i in prueba.reglas:
