@@ -499,6 +499,7 @@ class Page_ProcessData(AeroPage):
 
     def OnShow(self, event):
         if event.GetShow():
+            self.log.Clear()
             sys.stdout=self.redir
             print "Iniciando..."
             self.abort_event.clear()
