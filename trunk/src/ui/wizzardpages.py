@@ -384,17 +384,78 @@ class Page_ColumnSelector(AeroPage):
         data['selected']['columns'] = self.column_list.GetCheckedStrings()
         return True
             
-            
-class Page_TransformData(AeroPage):
-    '''Transforma los datos de la página anterior y los envia al algoritmo'''
-    def __init__(self, parent):
-        AeroPage.__init__(self, parent, u"Transformado datos")
 
-        text = AeroStaticText(self, -1, u"Transformando... ¡sea paciente!")
+class Page_ConfigureApriori(AeroPage):
+    '''Configura los parámetros para el algoritmo apriori'''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Parámetros del Apriori")
+
+        text = AeroStaticText(self, -1, u"Configure el algoritmo con los siguientes parámetros (estos representan los requerimientos mínimos)")
         self.content.Add(text, 0, wx.BOTTOM, 10)
         
-        self.gauge = wx.Gauge(self, -1, 50)
+        grid = wx.FlexGridSizer(rows=3, cols=3, hgap=10, vgap=10)
+        # soporte, confianza, sensibilidad
+        blank = wx.StaticText(self, -1, u"")
+        support = wx.StaticText(self, -1, u"Soporte")
+        self.support_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=30)
+        
+        blank = wx.StaticText(self, -1, u"")
+        trust = wx.StaticText(self, -1, u"Confianza")
+        self.trust_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=40)
+        
+        self.sensibility_check = wx.CheckBox(self, -1, "")
+        self.sensibility_text = wx.StaticText(self, -1, u"Sensibilidad")
+        self.sensibility_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=25)
+
+        for i in [blank, support, self.support_spinner, blank, trust, self.trust_spinner, self.sensibility_check, self.sensibility_text, self.sensibility_spinner]:
+            grid.Add(i)
+
+        self.content.Add(grid, 0, wx.EXPAND | wx.BOTTOM, 10)
+        
+        self.Bind(wx.EVT_CHECKBOX, self.OnSensibilityCheckbox, self.sensibility_check)
+        
+    def OnShow(self, event):
+        self.sensibility_text.Disable()
+        self.sensibility_spinner.Disable()
+        
+    def OnSensibilityCheckbox(self, event):
+        if event.IsChecked():
+            self.sensibility_text.Enable()
+            self.sensibility_spinner.Enable()
+        else:
+            self.sensibility_text.Disable()
+            self.sensibility_spinner.Disable()
+            
+    def OnNext(self):
+        # copiar las configuraciones
+        parameters = {}
+        parameters['support'] = self.support_spinner.GetValue()/100.0
+        parameters['trust'] = self.trust_spinner.GetValue()/100.0
+        parameters['sensibility'] = self.sensibility_spinner.GetValue()/100.0 if self.sensibility_check.IsChecked() else 0
+        data['parameters'] = parameters
+        print parameters
+        return True
+
+
+class Page_ProcessData(AeroPage):
+    '''Transforma los datos de la página anterior y los envia al algoritmo'''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Procesando datos")
+
+        text = AeroStaticText(self, -1, u"Procesando... ¡sea paciente!")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.gauge = wx.Gauge(self, -1, 50, size=(200,-1))
         self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        
+        text = AeroStaticText(self, -1, u"Log:")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        self.log = wx.TextCtrl(self, -1, "", size=(450, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        self.content.Add(self.log, 0, wx.BOTTOM, 10)
+        
+        self.log_save_button = wx.Button(self, -1, u"Guardar Log...")
+        self.content.Add(self.log_save_button, 0, wx.ALIGN_RIGHT | wx.BOTTOM, 10)
+        
         # gague timer
         self.Bind(wx.EVT_TIMER, self.TimerHandler)
         self.timer = wx.Timer(self)
@@ -421,6 +482,10 @@ class Page_TransformData(AeroPage):
             success = False 
         if success:
             self.GoToNext()
+            self.timer.Stop()
+            self.gauge.SetValue(50)
+            self.is_end = True
+            self.wizard.UpdateButtons()
         else:
             self.GoToPrev()
 
