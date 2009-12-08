@@ -109,9 +109,10 @@ class Nucleo:
             start = datetime.datetime.now()
         
         # se convierte los candidatos a listas
-        candidatos=[]  
-        for i in self.candidatos:
-            candidatos.append(i.valor)
+        candidatos=self.candidatos  
+        print len(candidatos)
+        #for i in self.candidatos:
+        #    candidatos.append(i.valor)
        # res = xcombinations(candidatos,2) # generar todas las combinaciones de 2 candidatos
 
         if verbose:
@@ -127,27 +128,39 @@ class Nucleo:
         """           
         for i in range(len(candidatos)):
             for j in candidatos[i+1:]:
-                if len(set(candidatos[i])&set(j))==0:
-                    
+                if len(set(candidatos[i].valor)&set(j.valor))==0:
+                    #print candidatos[i],j.valor
                 # creamos la regla con el lado izquierdo y derecho
                     nueva_regla1 = Regla()
                     nueva_regla2 = Regla()
-                    nueva_regla1.izq=candidatos[i]
-                    nueva_regla2.izq=j
-                    nueva_regla1.der=j
-                    nueva_regla2.der=candidatos[i]
+                    
+                    nueva_regla1.izq=candidatos[i].valor
+                    nueva_regla1.contador_izq=candidatos[i].contador
+                    nueva_regla2.izq=j.valor
+                    nueva_regla2.contador_izq=j.contador
+                    
+                    nueva_regla1.der=j.valor
+                    nueva_regla1.contador_der=j.contador
+                    nueva_regla2.der=candidatos[i].valor
+                    nueva_regla2.contador_der=candidatos[i].contador
+                    
+                    
                     mis_reglas=[]
                     mis_reglas.append(nueva_regla1)
                     mis_reglas.append(nueva_regla2)
+                    
                     for nueva_regla in mis_reglas:
                         # se recorre la matriz transpuesta y se calcula la validez de la reglas
                         for ind in self.popular:
-                            if set(nueva_regla.izq)<=set(ind): # esto vuelve a calcular las apariciones del set, (se podría optimizar)
-                                nueva_regla.contador_izq += 1
-                                if set(nueva_regla.der)<=set(ind):
-                                    nueva_regla.contador_amb += 1
-                            if set(nueva_regla.der)<=set(ind):
-                                nueva_regla.contador_der += 1
+                            if set(nueva_regla.izq)<=set(ind) and  set(nueva_regla.der)<=set(ind) : # esto vuelve a calcular las apariciones del set, (se podría optimizar)
+                                #nueva_regla.contador_izq += 1
+                                nueva_regla.contador_amb += 1
+                                #nueva_regla.contador_der += 1
+                            #else:
+                            #    if set(nueva_regla.der)<=set(ind):
+                            #        nueva_regla.contador_der += 1
+                            #    if set(nueva_regla.izq)<=set(ind):
+                            #        nueva_regla.contador_izq += 1
                         nueva_regla.confianza = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
                         nueva_regla.sensibilidad = nueva_regla.contador_amb / float(nueva_regla.contador_der)
                         
