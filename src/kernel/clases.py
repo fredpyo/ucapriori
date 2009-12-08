@@ -125,17 +125,17 @@ class Nucleo:
                 for i in res:
                     if len(set(i[0])&set(i[1])) == 0: # interseccion de izq y der, tienen que ser disjuntos
         """           
-        for i in candidatos:
-            for j in candidatos:
-                if len(set(i)&set(j))==0:
-                #    print i
+        for i in range(len(candidatos)):
+            for j in candidatos[i+1:]:
+                if len(set(candidatos[i])&set(j))==0:
+                    
                 # creamos la regla con el lado izquierdo y derecho
                     nueva_regla1 = Regla()
                     nueva_regla2 = Regla()
-                    nueva_regla1.izq=i
+                    nueva_regla1.izq=candidatos[i]
                     nueva_regla2.izq=j
                     nueva_regla1.der=j
-                    nueva_regla2.der=i
+                    nueva_regla2.der=candidatos[i]
                     mis_reglas=[]
                     mis_reglas.append(nueva_regla1)
                     mis_reglas.append(nueva_regla2)
