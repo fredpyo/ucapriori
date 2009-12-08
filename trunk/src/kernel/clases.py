@@ -101,7 +101,7 @@ class Nucleo:
     def generarReglas(self, trust=0, sensibility=0, verbose=True):
         # minimun trust
         #generar las todas las premutacios de caditatos de 2 logitud
-
+        res=[]
         if verbose:
             print "Obteniendo reglas que complan con la confianza=%.3f y sensibilidad=%.3f" % (trust, sensibility)
             print ""
@@ -112,7 +112,7 @@ class Nucleo:
         candidatos=[]  
         for i in self.candidatos:
             candidatos.append(i.valor)
-        res = xcombinations(candidatos,2) # generar todas las combinaciones de 2 candidatos
+       # res = xcombinations(candidatos,2) # generar todas las combinaciones de 2 candidatos
 
         if verbose:
             end = datetime.datetime.now()
@@ -121,28 +121,38 @@ class Nucleo:
 
             print "Calculando confianza y soporte de reglas"
             start = datetime.datetime.now()
-
-        for i in res:
-            if len(set(i[0])&set(i[1])) == 0: # interseccion de izq y der, tienen que ser disjuntos
-                # print i
+        """
+                for i in res:
+                    if len(set(i[0])&set(i[1])) == 0: # interseccion de izq y der, tienen que ser disjuntos
+        """           
+        for i in candidatos:
+            for j in candidatos:
+                if len(set(i)&set(j))==0:
+                #    print i
                 # creamos la regla con el lado izquierdo y derecho
-                nueva_regla = Regla()
-                nueva_regla.izq=i[0]
-                nueva_regla.der=i[1]
-                
-                # se recorre la matriz transpuesta y se calcula la validez de la reglas
-                for ind in self.popular:
-                    if set(nueva_regla.izq)<=set(ind): # esto vuelve a calcular las apariciones del set, (se podría optimizar)
-                        nueva_regla.contador_izq += 1
-                        if set(nueva_regla.der)<=set(ind):
-                            nueva_regla.contador_amb += 1
-                    if set(nueva_regla.der)<=set(ind):
-                        nueva_regla.contador_der += 1
-                nueva_regla.confianza = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
-                nueva_regla.sensibilidad = nueva_regla.contador_amb / float(nueva_regla.contador_der)
-                
-                if nueva_regla.confianza > trust and nueva_regla.sensibilidad > sensibility: # minima confiaza and minima sensibilidad
-                    self.reglas.append(nueva_regla)
+                    nueva_regla1 = Regla()
+                    nueva_regla2 = Regla()
+                    nueva_regla1.izq=i
+                    nueva_regla2.izq=j
+                    nueva_regla1.der=j
+                    nueva_regla2.der=i
+                    mis_reglas=[]
+                    mis_reglas.append(nueva_regla1)
+                    mis_reglas.append(nueva_regla2)
+                    for nueva_regla in mis_reglas:
+                        # se recorre la matriz transpuesta y se calcula la validez de la reglas
+                        for ind in self.popular:
+                            if set(nueva_regla.izq)<=set(ind): # esto vuelve a calcular las apariciones del set, (se podría optimizar)
+                                nueva_regla.contador_izq += 1
+                                if set(nueva_regla.der)<=set(ind):
+                                    nueva_regla.contador_amb += 1
+                            if set(nueva_regla.der)<=set(ind):
+                                nueva_regla.contador_der += 1
+                        nueva_regla.confianza = nueva_regla.contador_amb / float(nueva_regla.contador_izq)
+                        nueva_regla.sensibilidad = nueva_regla.contador_amb / float(nueva_regla.contador_der)
+                        
+                        if nueva_regla.confianza > trust and nueva_regla.sensibilidad > sensibility: # minima confiaza and minima sensibilidad
+                            self.reglas.append(nueva_regla)
 
         if verbose:
             end = datetime.datetime.now()
