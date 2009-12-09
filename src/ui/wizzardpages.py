@@ -405,30 +405,50 @@ class Page_ConfigureApriori(AeroPage):
         text = AeroStaticText(self, -1, u"Configure el algoritmo con los siguientes parámetros (estos representan los requerimientos mínimos)")
         self.content.Add(text, 0, wx.BOTTOM, 10)
         
-        grid = wx.FlexGridSizer(rows=3, cols=3, hgap=10, vgap=10)
+        grid = wx.FlexGridSizer(rows=3, cols=6, hgap=10, vgap=10)
         # soporte, confianza, sensibilidad
         blank = wx.StaticText(self, -1, u"")
-        support = wx.StaticText(self, -1, u"Soporte")
-        self.support_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=30)
+        support = wx.StaticText(self, -1, u"Soporte Minimo:")
+        self.support_min_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=30)
+        self.support_check = wx.CheckBox(self, -1, "")
+        self.support_max_text = wx.StaticText(self, -1, u"Máximo:")
+        self.support_max_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=100)
         
         blank2 = wx.StaticText(self, -1, u"")
-        trust = wx.StaticText(self, -1, u"Confianza")
+        trust = wx.StaticText(self, -1, u"Confianza Mínima:")
         self.trust_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=40)
+        blank3 = wx.StaticText(self, -1, u"")
+        blank4 = wx.StaticText(self, -1, u"")
+        blank5 = wx.StaticText(self, -1, u"")
         
         self.sensibility_check = wx.CheckBox(self, -1, "")
-        self.sensibility_text = wx.StaticText(self, -1, u"Sensibilidad")
+        self.sensibility_text = wx.StaticText(self, -1, u"Sensibilidad Mínima:")
         self.sensibility_spinner = wx.SpinCtrl(self, -1, "", min=0, max=100, initial=25)
+        blank6 = wx.StaticText(self, -1, u"")
+        blank7 = wx.StaticText(self, -1, u"")
+        blank8 = wx.StaticText(self, -1, u"")
 
-        for i in [blank, support, self.support_spinner, blank2, trust, self.trust_spinner, self.sensibility_check, self.sensibility_text, self.sensibility_spinner]:
+        for i in [blank, support, self.support_min_spinner, self.support_check, self.support_max_text, self.support_max_spinner, blank2, trust, self.trust_spinner, blank3, blank4, blank5, self.sensibility_check, self.sensibility_text, self.sensibility_spinner, blank6, blank7, blank8]:
             grid.Add(i)
 
         self.content.Add(grid, 0, wx.EXPAND | wx.BOTTOM, 10)
         
         self.Bind(wx.EVT_CHECKBOX, self.OnSensibilityCheckbox, self.sensibility_check)
+        self.Bind(wx.EVT_CHECKBOX, self.OnSupportCheckbox, self.support_check)
         
     def OnShow(self, event):
         self.sensibility_text.Disable()
         self.sensibility_spinner.Disable()
+        self.support_max_text.Disable()
+        self.support_max_spinner.Disable()
+
+    def OnSupportCheckbox(self, event):
+        if event.IsChecked():
+            self.support_max_text.Enable()
+            self.support_max_spinner.Enable()
+        else:
+            self.support_max_text.Disable()
+            self.support_max_spinner.Disable()
         
     def OnSensibilityCheckbox(self, event):
         if event.IsChecked():
@@ -441,7 +461,8 @@ class Page_ConfigureApriori(AeroPage):
     def OnNext(self):
         # copiar las configuraciones
         parameters = {}
-        parameters['support'] = self.support_spinner.GetValue()/100.0
+        parameters['support_min'] = self.support_min_spinner.GetValue()/100.0
+        parameters['support_max'] = self.support_max_spinner.GetValue()/100.0
         parameters['trust'] = self.trust_spinner.GetValue()/100.0
         parameters['sensibility'] = self.sensibility_spinner.GetValue()/100.0 if self.sensibility_check.IsChecked() else 0
         data['parameters'] = parameters
@@ -551,7 +572,7 @@ class Page_ProcessData(AeroPage):
         print u"Iniciando algoritmo Apriori...\n"
         prueba = Nucleo()
         # generar item sets
-        prueba.minimumReq(data['transformed'],min=data['parameters']['support'])
+        prueba.minimumReq(data['transformed'],min=data['parameters']['support_min'],max=data['parameters']['support_max'])
         print "Sets generados:"
         for i in prueba.candidatos:
             print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)

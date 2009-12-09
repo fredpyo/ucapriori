@@ -24,7 +24,7 @@ class Nucleo:
         Constructor
         '''
         
-    def minimumReq(self,datos={},min=1, verbose=True):
+    def minimumReq(self,datos={},min=1, max=1, verbose=True):
         '''variables son la lista de variables = ['x1','x2','x3'....]
            data es toda la lista de la BD 
            min el el minimo de requerimiento 0...1 '''
@@ -86,7 +86,7 @@ class Nucleo:
                      contador += 1
              
               # minimo soporte
-              if (contador > (len(popular)*float(min))): # len(popular) * float(min) == n * requerimiento_minimo, o sea, decir cuanto es 70% de n (por ejemplo) 
+              if ((len(popular)*float(min)) < contador <= (len(popular)*float(max))): # len(popular) * float(min) == n * requerimiento_minimo, o sea, decir cuanto es 70% de n (por ejemplo) 
                   nuevo_candidato=Candidato(j,(float(contador)/float(len(popular))),contador)
                   self.candidatos.append(nuevo_candidato)
 
