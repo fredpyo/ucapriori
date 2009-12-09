@@ -164,15 +164,7 @@ class Page_DatabaseSelector(AeroPage):
         self.content.Add(self.combo_db, 0, wx.ALL, 10)
         """
         self.database_choice_book = DatabaseChoiceBook(self, -1)
-        self.content.Add(self.database_choice_book, 0, wx.EXPAND)
-        
-        b = wx.BitmapButton(self, -1, wx.Bitmap("ui/img/database.png", wx.BITMAP_TYPE_PNG))
-        self.Bind(wx.EVT_BUTTON, self.Test, b)
-        self.content.Add(b)
-
-        #test.Layout() # distribute the window's new content
-        #test.Fit() # fit the size of the wizard window
-        #self.wizard.Center() # center :P
+        self.content.Add(self.database_choice_book, 0, wx.EXPAND | wx.BOTTOM, 10)
     
     def OnNext(self):
         print data
