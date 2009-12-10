@@ -193,6 +193,12 @@ class Regla:
     
     def imprimir2(self):
         print "%s --> %s :: Confianza=%.3f, Sensibilidad=%.3f" % (str(self.izq), str(self.der), self.confianza, self.sensibilidad)
+    
+    def como_cadena(self, lado, separador = ", "):
+        if lado == "izq":
+            return separador.join(self.izq)
+        else:
+            return separador.join(self.der)
 
 
 class Candidato:
