@@ -192,7 +192,8 @@ class Regla:
         print "Sensibilidad -> ", self.sensibilidad
     
     def imprimir2(self):
-        print "%s --> %s :: Confianza=%.3f, Sensibilidad=%.3f" % (str(self.izq), str(self.der), self.confianza, self.sensibilidad)
+        #print "%s --> %s :: Confianza=%.3f, Sensibilidad=%.3f" % (str(self.izq), str(self.der), self.confianza, self.sensibilidad)
+        print "{%s} --> {%s} :: Confianza=%.3f, Sensibilidad=%.3f" % (", ".join(self.izq), ", ".join(self.der), self.confianza, self.sensibilidad)
     
     def como_cadena(self, lado, separador = ", "):
         if lado == "izq":

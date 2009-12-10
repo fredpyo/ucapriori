@@ -5,17 +5,18 @@ Created on Nov 7, 2009
 @author: Federico Cáceres <fede.caceres@gmail.com>
 '''
 
-import pydot
 from sqlalchemy.sql import select
 import os
 import sys
 import wx
 import  wx.lib.filebrowsebutton as filebrowse
 import wx.lib.delayedresult as delayedresult
+import wx.lib.scrolledpanel as scrolledpanel
 
 from data import SQLDataSource
 from data.gridtables import PreviewTable, TransformationTable
 from data.transformations import Transformer
+from graphing import Graphing
 from wxjikken.aerowizard import *
 
 
@@ -488,13 +489,25 @@ class Page_ProcessData(AeroPage):
         self.gauge = wx.Gauge(self, -1, 50, size=(200,-1))
         self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
         
-        text = AeroStaticText(self, -1, u"Log:")
-        self.content.Add(text, 0, wx.BOTTOM, 10)
-        self.log = wx.TextCtrl(self, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-        self.content.Add(self.log, 0, wx.BOTTOM, 10)
+        tabs = wx.Notebook(self, -1, size=(550, 300), style=wx.BK_DEFAULT)
         
-        self.log_save_button = wx.Button(self, -1, u"Guardar Log...")
-        self.content.Add(self.log_save_button, 0, wx.ALIGN_RIGHT | wx.BOTTOM, 10)
+        
+        self.log = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        tabs.AddPage(self.log, "Registro")
+        
+        spanel = scrolledpanel.ScrolledPanel(tabs, -1, size=(550, 250))
+        spanel.SetBackgroundColour("#ffffff")
+        self.graph_bitmap = wx.StaticBitmap(spanel, -1)
+        tabs.AddPage(spanel, "Grafo de Reglas")
+        
+        self.content.Add(tabs, 0, wx.BOTTOM, 10)
+        
+        hs = wx.BoxSizer(wx.HORIZONTAL)
+        self.log_save_button = wx.Button(self, -1, u"Guardar Log")
+        hs.Add(self.log_save_button, 0, wx.RIGHT, 10)
+        self.graph_save_button = wx.Button(self, -1, u"Guardar Grafo")
+        hs.Add(self.graph_save_button, 0)
+        self.content.Add(hs, 0, wx.ALIGN_RIGHT | wx.BOTTOM, 10)
         
         # gague timer
         self.Bind(wx.EVT_TIMER, self.TimerHandler)
@@ -535,6 +548,8 @@ class Page_ProcessData(AeroPage):
         jobID = delayedResult.getJobID()
         try:
             success = delayedResult.get()
+            width, height = self.graph_bitmap.GetSize()
+            self.graph_bitmap.SetBitmap(wx.BitmapFromImage(self.graph.get_wx_image()))
         except Exception, exc:
             wx.MessageBox(u"Error:\n%s" % exc, u"Error", wx.OK | wx.ICON_ERROR, self)
             #print "Error thread: %d expection: %s" % (jobID, exc)
@@ -574,16 +589,11 @@ class Page_ProcessData(AeroPage):
         print "Reglas generadas:"
         for i in prueba.reglas:
             i.imprimir2()
+
+        # generar el grafo de las reglas
+        self.graph = Graphing()
+        self.graph.graph_rules(prueba.reglas)
+        self.graph.save("grafo.png")
             
-        graph = pydot.Dot('rt', graph_type='digraph')
-        for i in prueba.reglas:
-            node_izq = pydot.Node(i.como_cadena("izq", "\\n"), style="filled", fillcolor="#a7ff9f", color="#12df00")
-            node_der = pydot.Node(i.como_cadena("der", "\\n"), style="filled", fillcolor="#a7ff9f", color="#12df00")
-            graph.add_node(node_izq)
-            graph.add_node(node_der)
-            edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="8.0", label="Confianza=%d%%\\nSensibilidad=%d%%" % (i.confianza*100,i.sensibilidad*100))
-            #edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="11.0", label="asdads")
-            graph.add_edge(edge)
-        graph.write_png('rt_graph.png')
         return True
             
