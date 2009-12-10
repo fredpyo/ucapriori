@@ -5,13 +5,13 @@ Created on Nov 7, 2009
 @author: Federico Cáceres <fede.caceres@gmail.com>
 '''
 
+import pydot
 from sqlalchemy.sql import select
 import os
 import sys
 import wx
 import  wx.lib.filebrowsebutton as filebrowse
 import wx.lib.delayedresult as delayedresult
-
 
 from data import SQLDataSource
 from data.gridtables import PreviewTable, TransformationTable
@@ -536,7 +536,7 @@ class Page_ProcessData(AeroPage):
         try:
             success = delayedResult.get()
         except Exception, exc:
-            wx.MessageBox(u"Error de conexión:\n%s" % exc, u"Error de Conexión", wx.OK | wx.ICON_ERROR, self)
+            wx.MessageBox(u"Error:\n%s" % exc, u"Error", wx.OK | wx.ICON_ERROR, self)
             #print "Error thread: %d expection: %s" % (jobID, exc)
             success = False 
         if success:
@@ -574,5 +574,16 @@ class Page_ProcessData(AeroPage):
         print "Reglas generadas:"
         for i in prueba.reglas:
             i.imprimir2()
+            
+        graph = pydot.Dot('rt', graph_type='digraph')
+        for i in prueba.reglas:
+            node_izq = pydot.Node(i.como_cadena("izq", "\\n"), style="filled", fillcolor="#a7ff9f", color="#12df00")
+            node_der = pydot.Node(i.como_cadena("der", "\\n"), style="filled", fillcolor="#a7ff9f", color="#12df00")
+            graph.add_node(node_izq)
+            graph.add_node(node_der)
+            edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="8.0", label="Confianza=%d%%\\nSensibilidad=%d%%" % (i.confianza*100,i.sensibilidad*100))
+            #edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="11.0", label="asdads")
+            graph.add_edge(edge)
+        graph.write_png('rt_graph.png')
         return True
             
