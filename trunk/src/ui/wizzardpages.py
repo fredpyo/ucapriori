@@ -518,7 +518,8 @@ class Page_ProcessData(AeroPage):
         # redirection
         self.redir=RedirectText(self.log)
         
-        self.Bind(wx.EVT_BUTTON, self.OnSave, self.log_save_button)
+        self.Bind(wx.EVT_BUTTON, self.OnSaveLog, self.log_save_button)
+        self.Bind(wx.EVT_BUTTON, self.OnSaveGraph, self.graph_save_button)
 
     def TimerHandler(self, event):
         self.gauge.Pulse()
@@ -532,7 +533,7 @@ class Page_ProcessData(AeroPage):
             self.worker = delayedresult.startWorker(self._Consumer, self._TransformWorker, wargs=(10,self.abort_event), jobID=10)
             self.timer.Start(50)
     
-    def OnSave(self, event):
+    def OnSaveLog(self, event):
         dlg = wx.FileDialog(self, "Guardar log...", wx.StandardPaths.Get().GetDocumentsDir(), style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard="Archivo de texto (*.txt)|*.txt|Todos los archivos (*.*)|*.*")
         if dlg.ShowModal() == wx.ID_OK:
             filename = dlg.GetPath()
@@ -542,6 +543,13 @@ class Page_ProcessData(AeroPage):
             f.write(self.log.GetValue())
             f.close()
             
+    def OnSaveGraph(self, event):
+        dlg = wx.FileDialog(self, "Guardar grafo...", wx.StandardPaths.Get().GetDocumentsDir(), style=wx.SAVE | wx.OVERWRITE_PROMPT, wildcard=u"Imágen PNG (*.png)|*.png|Todos los archivos (*.*)|*.*")
+        if dlg.ShowModal() == wx.ID_OK:
+            filename = dlg.GetPath()
+            if not os.path.splitext(filename)[1]:
+                filename = filename + ".png"
+            self.graph.save(filename)
 
     def _Consumer(self, delayedResult):
         '''Espera que se complete la transformación'''
