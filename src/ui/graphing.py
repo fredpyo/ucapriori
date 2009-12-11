@@ -5,6 +5,7 @@ Created on Dec 10, 2009
 @author: fede
 La idea de esto es manejar la graficación por separado... manejo de archivos temporales, etc.
 '''
+import os
 import pydot
 import tempfile
 import wx
@@ -35,4 +36,9 @@ class Graphing(object):
         return wx.Image(self.dir+'graph.png', wx.BITMAP_TYPE_ANY)
     
     def save(self, filename):
-        return self.graph.write_png(filename) 
+        '''Guardar en un archivo png'''
+        return self.graph.write_png(filename)
+    
+    def __del__(self):
+        '''Al destruir este objeto, eliminar el directorio temporal :D'''
+        os.rmdir(self.dir)
