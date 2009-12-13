@@ -262,9 +262,9 @@ class Page_TableSelector(AeroPage):
             #self.table_list.Set(tables)
             self.table_list.Set([])
             tables = [t for t in data['source'].get_tables()]
-            tables.sort(key=lambda x: x.__table__.name)
+            tables.sort(key=lambda x: x.name)
             for t in tables:
-                self.table_list.Append(t.__table__.name, t)
+                self.table_list.Append(t.name, t)
             
     def OnNext(self):
         return data['selected']['table'] != None
@@ -322,9 +322,9 @@ class Page_ColumnSelector(AeroPage):
         if event.GetShow():
             
             column_count = data['source'].session.query(data['selected']['table']).count()
-            self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].__table__.name))
+            self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].name))
             
-            columns = [c.name for c in data['selected']['table'].__table__.columns]
+            columns = [c.name for c in data['selected']['table'].columns]
             #self.column_list.SetSelection(0, False)
             self.column_list.Set(columns)
             # inicializar tablas de transformación
@@ -365,7 +365,7 @@ class Page_ColumnSelector(AeroPage):
         if event.IsChecked():
             print "Change table"
             
-            query = select([data['selected']['table'].__table__])
+            query = select([data['selected']['table']])
             conn = data['source'].engine.connect()
             
             
@@ -581,7 +581,7 @@ class Page_ProcessData(AeroPage):
         conn = data['source'].engine.connect()
         for checked_column in data['selected']['columns']:
             rules = data['transformation_tables'][checked_column].GetRules()
-            column = data['selected']['table'].__table__.columns[checked_column]
+            column = data['selected']['table'].columns[checked_column]
             values = [row[0] for row in conn.execute(select([column]))]
             transformer = Transformer(rules)
             data['transformed'][checked_column] = transformer.transform_values(values)
