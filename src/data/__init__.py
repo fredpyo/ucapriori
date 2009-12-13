@@ -13,7 +13,7 @@ class SQLDataSource(object):
         self.engine = None
         self.metadata = None
         self.session = None
-        self.entities = {}
+        self.tables = {}
        
         
     def connect(self):
@@ -26,21 +26,18 @@ class SQLDataSource(object):
         Session = sqlalchemy.orm.sessionmaker(bind=self.engine) # ver como funciona esto para hacer un "entity maker"
         self.session = Session()
         
-        # registrar entidades usando el mapeador automático de entidades :D
-        entities = {}
-        for table in self.metadata.sorted_tables:
+        # agarrar todas las tablas que nos interesan
+        # podriamos usar el diccionario self.metadata.tables directamente, pero queremos excluir algunas tablas primero :D
+        for table in self.metadata.tables.itervalues():
             if self.connection_string[0:6] == "sqlite" and table.name[0:6] == "sqlite":
                 # saltar las tablas del sistema
                 continue 
-            # crear entidad nueva
-            self.entities[table.name] = entity.EntityFactory(self.metadata.tables[table.name])
-            # registrar al ORM
-            sqlalchemy.orm.mapper(self.entities[table.name], self.metadata.tables[table.name])
-           
+            # almacenar la referencia a la tabla
+            self.tables[table.name] = table
         
     def get_tables(self):
         '''
         Retorna una lista de tablas
         '''
-        return self.entities.itervalues()
+        return self.tables.itervalues()
         #return self.metadata.sorted_tables
