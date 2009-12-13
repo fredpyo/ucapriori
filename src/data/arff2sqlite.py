@@ -54,7 +54,7 @@ class Arff2Sqlite(object):
         # recorrer todas las lines
         for line in file:
             # saltar filas vacias o de comentario
-            if line.strip() == "" or line[0] == "#":
+            if line.strip() == "" or line[0] == "%":
                 continue
             
             # buscar la cabecera
@@ -86,12 +86,14 @@ class Arff2Sqlite(object):
                     currently_at = "body"
             # cargar datos
             elif currently_at == "body":
-                self.data.append([x.strip for x in line.strip().split(",")])
+                self.data.append([x.strip() if x.strip() != '?' else None for x in line.strip().split(",")])
     
     def to_sqlite(self, database=":memory:", verbose=False):
         '''
         Converir la representación interna del archivo arff parseado a sqlite
         '''
+        contador = 0
+        
         # connect
         engine = sqlalchemy.create_engine("sqlite:///%s" % database, echo=verbose)
         metadata = sqlalchemy.MetaData(bind=engine)
@@ -109,6 +111,8 @@ class Arff2Sqlite(object):
         # creamos una conexión a la bd
         conn = engine.connect()
         # recorremos todos los datos extraidos
+        # usamos una lista de bulk insert para hacer inserts en "masa"
+        bulk_insert = []
         for row in self.data:
             # diccionario con los valores que insertaremos
             insert_this = {}
@@ -118,13 +122,23 @@ class Arff2Sqlite(object):
                 #      atributo y así definimos bien en insert_this que dato agregar a que
                 #      columna
                 insert_this[self.ordered_attributes[i]] = row[i]
-            # ejecutamos, insertamos
-            conn.execute(table.insert(insert_this))
+            # acumular
+            bulk_insert.append(insert_this)
+            # si nuestra lista de inserts en masa ya tiene 10 items, insertar
+            if len(bulk_insert) == 100:
+                # ejecutamos, insertamos
+                conn.execute(table.insert(), bulk_insert)
+                bulk_insert = []
+                contador += 100
+                print "Insertados %d registros" % contador
+        # nos sobró algo? insertar!
+        if bulk_insert:
+            contador += len(bulk_insert)
+            conn.execute(table.insert(), bulk_insert)
+            print "Insertados %d registros" % contador
         # terminado, cerramos la conexión
         conn.close()
-            
         
-    
     def _get_column_type(self, type):
         if type == "numeric":
             return sqlalchemy.Numeric
