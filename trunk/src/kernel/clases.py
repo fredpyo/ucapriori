@@ -42,8 +42,8 @@ class Nucleo:
         # convierte el diccionario en lista
         for i in datos: # iterar sobre las etiquetas del diccionario 
           for j in set(datos[i]):  # itera sobre los elementos unicos de cada lista
-                variables.append(j) # almacena las variables unicas en variables, las variables que entrarán en juego
-          
+                variables.append(str(i)+"="+str(j)) # almacena las variables unicas en variables, las variables que entrarán en juego
+                #print (str(j)+"-"+str(i))
         # generar las todas las combinaciones de variables de 1 a n logitud        
         for i in range(1,len(datos)):
             res.append(xuniqueCombinations(variables,i))
@@ -65,7 +65,7 @@ class Nucleo:
         # convertir de la notación de entrada que es por columnas a una notación por filas 
         for i in datos:
             for x,y in zip(datos[i],popular):
-                y.append(x)
+                y.append(str(i)+"="+str(x))
         
         if verbose:
             end = datetime.datetime.now()
@@ -210,4 +210,12 @@ class Candidato:
     def __init__(self,valor,porcentaje,contador):
         self.valor=valor
         self.porcentaje=porcentaje
-        self.contador = contador    
+        self.contador = contador
+        
+class Item():
+    valor=[]
+    padre=[]
+    
+    def __init__(self,valor,padre):
+        self.valor=valor
+        self.padre=padre    
