@@ -40,10 +40,10 @@ class Arff2Sqlite(object):
         # utilizaremos expresiones regulares para comprender las definiciones de los atributos
         # - primero detectamos el literal @ATTRIBUTE --> \\@ATTRIBUTE
         # - luego una serie de espacios con barra o tab --> [ |\t]*
-        # - luego el nombre del atributo --> '?([a-z|A-Z|0-9]*)'? --> puede o no tener comilla simple :D
+        # - luego el nombre del atributo --> '?([ |a-z|A-Z|0-9]*)'? --> puede o no tener comilla simple :D
         # - luego otra serie de espacios --> [ |\t]*
         # - finalmente el tipo de atributo --> ((\\NUMERIC)|({.*})|(\\STRING))
-        relre = re.compile("\\@ATTRIBUTE[ |\t]*'?([a-z|A-Z|0-9]*)'?[ |\t]*(([\\NUMERIC|\\REAL])|({.*})|(\\STRING))",re.IGNORECASE)
+        relre = re.compile("\\@ATTRIBUTE[ |\t]*(\\'[ |a-z|A-Z|0-9]*\\'|[a-z|A-Z|0-9]*)[ |\t]*(([\\NUMERIC|\\REAL])|({.*})|(\\STRING))",re.IGNORECASE)
         # variables que indican las posiciones de las cosas parseadas en la expresión regular
         ATTRIBUTE_NAME = 1
         TYPE_NUMERIC = 3
@@ -77,7 +77,7 @@ class Arff2Sqlite(object):
                     else:
                         type = "string"
                     # almacenamos el nombre del atributo y su tipo
-                    self.attributes[matches.group(ATTRIBUTE_NAME)] = type
+                    self.attributes[matches.group(ATTRIBUTE_NAME).strip("'")] = type
                     # HACK y además guardamos en una lista ordenada
                     self.ordered_attributes.append(matches.group(ATTRIBUTE_NAME))
                 # encontramos el salto al cuerpo del archivo
@@ -87,12 +87,12 @@ class Arff2Sqlite(object):
             elif currently_at == "body":
                 self.data.append(line.strip().split(","))
     
-    def to_sqlite(self, database=":memory:"):
+    def to_sqlite(self, database=":memory:", verbose=False):
         '''
         Converir la representación interna del archivo arff parseado a sqlite
         '''
         # connect
-        engine = sqlalchemy.create_engine("sqlite:///%s" % database, echo=True)
+        engine = sqlalchemy.create_engine("sqlite:///%s" % database, echo=verbose)
         metadata = sqlalchemy.MetaData(bind=engine)
         
         # creamos una tabla con el nombre extraido de la relación en el arff
@@ -155,6 +155,7 @@ if __name__ == "__main__":
     if options.input:
         converter = Arff2Sqlite(options.input)
         converter.parse()
+        print converter.ordered_attributes
         converter.to_sqlite(options.output)
     else:
         print "Debe al menos especificar un archivo de entrada"
