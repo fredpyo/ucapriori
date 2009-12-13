@@ -27,12 +27,13 @@ class Graphing(object):
             edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="8.0", label="Confianza=%d%%\\nSensibilidad=%d%%" % (i.confianza*100,i.sensibilidad*100))
             #edge = pydot.Edge(node_izq, node_der, color="#669966", labelfontcolor="#669966", fontsize="11.0", label="asdads")
             self.graph.add_edge(edge)
-        self.graph.write_png(self.dir+'graph.png')
+        #self.graph.write_png(self.dir+'graph.png')
         
     def get_wx_image(self):
         '''
         Retorna una xw image
         '''
+        self.graph.write_png(self.dir+'graph.png')
         return wx.Image(self.dir+'graph.png', wx.BITMAP_TYPE_ANY)
     
     def save(self, filename):

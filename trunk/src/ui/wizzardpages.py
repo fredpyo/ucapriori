@@ -557,7 +557,12 @@ class Page_ProcessData(AeroPage):
         try:
             success = delayedResult.get()
             width, height = self.graph_bitmap.GetSize()
-            self.graph_bitmap.SetBitmap(wx.BitmapFromImage(self.graph.get_wx_image()))
+            
+            try:
+                self.graph.save("grafo.png")
+                self.graph_bitmap.SetBitmap(wx.BitmapFromImage(self.graph.get_wx_image()))
+            except:
+                wx.MessageBox(u"Error al generar el grafo.\nNo graphs for you!", u"Error de grafación", wx.OK | wx.ICON_ERROR, self)
         except Exception, exc:
             wx.MessageBox(u"Error:\n%s" % exc, u"Error", wx.OK | wx.ICON_ERROR, self)
             #print "Error thread: %d expection: %s" % (jobID, exc)
@@ -601,7 +606,6 @@ class Page_ProcessData(AeroPage):
         # generar el grafo de las reglas
         self.graph = Graphing()
         self.graph.graph_rules(prueba.reglas)
-        self.graph.save("grafo.png")
             
         return True
             
