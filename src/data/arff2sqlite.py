@@ -76,16 +76,17 @@ class Arff2Sqlite(object):
                         type = "string"
                     else:
                         type = "string"
+                    col_name = matches.group(ATTRIBUTE_NAME).strip("'")
                     # almacenamos el nombre del atributo y su tipo
-                    self.attributes[matches.group(ATTRIBUTE_NAME).strip("'")] = type
+                    self.attributes[col_name] = type
                     # HACK y además guardamos en una lista ordenada
-                    self.ordered_attributes.append(matches.group(ATTRIBUTE_NAME))
+                    self.ordered_attributes.append(col_name)
                 # encontramos el salto al cuerpo del archivo
                 elif line.lower().startswith("@data"):
                     currently_at = "body"
             # cargar datos
             elif currently_at == "body":
-                self.data.append(line.strip().split(","))
+                self.data.append([x.strip for x in line.strip().split(",")])
     
     def to_sqlite(self, database=":memory:", verbose=False):
         '''
@@ -155,7 +156,7 @@ if __name__ == "__main__":
     if options.input:
         converter = Arff2Sqlite(options.input)
         converter.parse()
-        print converter.ordered_attributes
-        converter.to_sqlite(options.output)
+        print "Detectadas %d columnas..." % len(converter.ordered_attributes)
+        converter.to_sqlite(options.output, options.verbose)
     else:
         print "Debe al menos especificar un archivo de entrada"
