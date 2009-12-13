@@ -15,14 +15,14 @@ class Nucleo:
     para generar los items sets y consecuentemente las reglas que complan con los parametros
     support, trust y sensibility
     '''
-    candidatos=[] 
-    reglas=[]
-    popular=[]
     
-    def __init__(selfparams):
+    def __init__(self):
         '''
         Constructor
         '''
+        self.candidatos=[] 
+        self.reglas=[]
+        self.popular=[]
         
     def minimumReq(self,datos={},min=1, max=1, verbose=True):
         '''variables son la lista de variables = ['x1','x2','x3'....]
