@@ -586,7 +586,6 @@ class Page_ProcessData(AeroPage):
             transformer = Transformer(rules)
             data['transformed'][checked_column] = transformer.transform_values(values)
             
-        pp.pprint(data['transformed'])
         print u"Transformación terminada..."
         print "----------"
         print u"Iniciando algoritmo Apriori...\n"
