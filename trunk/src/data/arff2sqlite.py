@@ -40,10 +40,10 @@ class Arff2Sqlite(object):
         # utilizaremos expresiones regulares para comprender las definiciones de los atributos
         # - primero detectamos el literal @ATTRIBUTE --> \\@ATTRIBUTE
         # - luego una serie de espacios con barra o tab --> [ |\t]*
-        # - luego el nombre del atributo --> '?([ |a-z|A-Z|0-9]*)'? --> puede o no tener comilla simple :D
+        # - luego el nombre del atributo --> (\\'[\\-| |a-z|A-Z|0-9]*\\'|[\\-|a-z|A-Z|0-9]*) --> puede o no tener comilla simple :D
         # - luego otra serie de espacios --> [ |\t]*
         # - finalmente el tipo de atributo --> ((\\NUMERIC)|({.*})|(\\STRING))
-        relre = re.compile("\\@ATTRIBUTE[ |\t]*(\\'[ |a-z|A-Z|0-9]*\\'|[a-z|A-Z|0-9]*)[ |\t]*(([\\NUMERIC|\\REAL])|({.*})|(\\STRING))",re.IGNORECASE)
+        relre = re.compile("\\@ATTRIBUTE[ |\t]*(\\'[\\-| |a-z|A-Z|0-9]*\\'|[\\-|a-z|A-Z|0-9]*)[ |\t]*(([\\NUMERIC|\\REAL])|({.*})|(\\STRING))",re.IGNORECASE)
         # variables que indican las posiciones de las cosas parseadas en la expresión regular
         ATTRIBUTE_NAME = 1
         TYPE_NUMERIC = 3
