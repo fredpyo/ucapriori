@@ -5,6 +5,7 @@ Created on Oct 18, 2009
 @author: sergio
 '''
 import datetime
+import itertools
 
 from xpermutations import *
 
@@ -20,8 +21,10 @@ class Nucleo:
         '''
         Constructor
         '''
-        self.candidatos=[] 
+        self.item_sets=[] 
+        self.item_sets_rechazados=[]
         self.reglas=[]
+        self.reglas_rechazadas=[]
         self.popular=[]
         
     def minimumReq(self,datos={},min=1, max=1, verbose=True):
@@ -30,6 +33,7 @@ class Nucleo:
            min el el minimo de requerimiento 0...1 '''
         # minimum Support
         res=[]
+        res_new=set() # version optimizada
         variables=[]
         popular=[]
 
@@ -43,11 +47,24 @@ class Nucleo:
         for i in datos: # iterar sobre las etiquetas del diccionario 
           for j in set(datos[i]):  # itera sobre los elementos unicos de cada lista
                 variables.append(str(i)+"="+str(j)) # almacena las variables unicas en variables, las variables que entrarán en juego
-                #print (str(j)+"-"+str(i))
-        # generar las todas las combinaciones de variables de 1 a n logitud        
-        for i in range(1,len(datos)):
-            res.append(xuniqueCombinations(variables,i))
-            
+
+        """
+        generación de itemsets - version optimizada
+        """
+        # generar todas las combinaciones de columnas
+        column_sets = []
+        for i in xrange(len(datos)):
+            column_sets.extend([k for k in itertools.combinations(datos.keys(), i+1)])
+        
+        # iterar sobre la lista entera de items
+        for j in xrange(len(datos[column_sets[0][0]])): # column_sets[0][0] se refiere al primer elemento del primer set de listas de columnas, todas las columnas tienen una misma cantidad de elementos, así que esto es solo para iterar hasta el final de la tabla
+            # iterar sobre las combinaciones de columnas
+            for column_set in column_sets:
+                # iterar sobre la lista de columnas seleccionadas para los items en la fila j
+                temp = tuple([ str(column) + "=" + str(datos[column][j]) for column in column_set ]) # list comprehensions blow your mind!
+                # agregar a nuestro set
+                res_new.add(temp)
+
         if verbose:
             end = datetime.datetime.now()
             print "Items sets posibles generados en: ", end - start
@@ -56,11 +73,11 @@ class Nucleo:
             print "Convirtiendo los datos a la representación interna optimizada..."
             start = datetime.datetime.now()
 
-        # matriz "transversa" de los datos
-        for i in datos: # iterar sobre las etiquetas del diccionario 
-            for j in datos[i]: # itera sobre los elementos unicos de cada lista
-                popular.append([])
-            break
+        # generar una matriz vacia que sea "transversa" a la de los datos
+        for i in datos: # seleccionar la primera etiqueta del diccionario 
+            for j in datos[i]: # recorremos una columna de la tabla hasta el fondo
+                popular.append([]) # generamos una lista vacia para cada fila de la tabla
+            break # ya no nos interesa el resto de las columnas
        
         # convertir de la notación de entrada que es por columnas a una notación por filas 
         for i in datos:
@@ -76,23 +93,23 @@ class Nucleo:
             start = datetime.datetime.now()
 
         # esto ya genera los sets que pasaron el minimum requirement 
-        for i in res: # iterar sobre cada una de las combinaciones posibles
-           for j in i: # iterar sobre cada elemento de la combinación, siempre son listas de longitud 1 a n 
-              #si pasa la prueba de minReq
-              contador = 0
-             
-              for ind in popular:
-                  if set(j) <= set(ind): # Set1 <= Set2 es equivalente a Set1 "está incluido en" Set2 
-                     contador += 1
-             
-              # minimo soporte
-              if ((len(popular)*float(min)) < contador <= (len(popular)*float(max))): # len(popular) * float(min) == n * requerimiento_minimo, o sea, decir cuanto es 70% de n (por ejemplo) 
-                  nuevo_candidato=Candidato(j,(float(contador)/float(len(popular))),contador)
-                  self.candidatos.append(nuevo_candidato)
+        for j in res_new: # iterar sobre cada una de las combinaciones posibles
+            #si pasa la prueba de minReq
+            soporte = 0
+            for ind in popular:
+                if set(j) <= set(ind): # Set1 <= Set2 es equivalente a Set1 "está incluido en" Set2 
+                    soporte += 1
+            # crear un nuevo candidato y ver si pasa las pruebsa
+            nuevo_candidato=Candidato(j,(float(soporte)/float(len(popular))),soporte)
+            if ((len(popular)*float(min)) < soporte <= (len(popular)*float(max))): # len(popular) * float(min) == n * requerimiento_minimo, o sea, decir cuanto es 70% de n (por ejemplo) 
+                self.item_sets.append(nuevo_candidato)
+            else:
+                self.item_sets_rechazados.append(nuevo_candidato)
+
 
         if verbose:
             end = datetime.datetime.now()
-            print "%s cumplen con el minimun support, obtenidos en: " % len(self.candidatos), end - start
+            print "%s de %s cumplen con el minimun support, obtenidos en: " % (len(self.item_sets), len(res_new)), end - start
             print ""
 
         # esto lo usamos luego
@@ -105,27 +122,11 @@ class Nucleo:
         if verbose:
             print "Obteniendo reglas que complan con la confianza=%.3f y sensibilidad=%.3f" % (trust, sensibility)
             print ""
-            print "Generando todas las combinaciones de reglas posibles..."
             start = datetime.datetime.now()
         
         # se convierte los candidatos a listas
-        candidatos=self.candidatos  
-        print len(candidatos)
-        #for i in self.candidatos:
-        #    candidatos.append(i.valor)
-       # res = xcombinations(candidatos,2) # generar todas las combinaciones de 2 candidatos
+        candidatos=self.item_sets  
 
-        if verbose:
-            end = datetime.datetime.now()
-            print "Todas las combinaciones posibles generadas en: ", end - start
-            print ""
-
-            print "Calculando confianza y soporte de reglas"
-            start = datetime.datetime.now()
-        """
-                for i in res:
-                    if len(set(i[0])&set(i[1])) == 0: # interseccion de izq y der, tienen que ser disjuntos
-        """           
         for i in range(len(candidatos)):
             for j in candidatos[i+1:]:
                 if len(set(candidatos[i].valor)&set(j.valor))==0:

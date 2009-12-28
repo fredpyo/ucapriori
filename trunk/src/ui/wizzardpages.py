@@ -609,8 +609,8 @@ class Page_ProcessData(AeroPage):
         prueba = Nucleo()
         # generar item sets
         prueba.minimumReq(data['transformed'],min=data['parameters']['support_min'],max=data['parameters']['support_max'])
-        print "Sets generados:"
-        for i in prueba.candidatos:
+        print "Item sets generados:"
+        for i in prueba.item_sets:
             print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
         print "----------"
         # generar reglas

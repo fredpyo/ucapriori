@@ -38,7 +38,7 @@ prueba = Nucleo()
 
 prueba.minimumReq(datos,min=0.20)
 print "los que pasaron el min req"
-for i in prueba.candidatos:
+for i in prueba.item_sets:
     print i.valor ,i.porcentaje
 prueba.generarReglas()
 
