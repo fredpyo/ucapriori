@@ -280,7 +280,10 @@ class Page_ColumnSelector(AeroPage):
     def __init__(self, parent):
         AeroPage.__init__(self, parent, u"Seleccione datos a procesar")
         
-        self.text_instructions = AeroStaticText(self, -1, u"...")
+        self.text_info = AeroStaticText(self, -1, u"...")
+        self.content.Add(self.text_info, 0, wx.BOTTOM, 10)
+        
+        self.text_instructions = AeroStaticText(self, -1, u"Seleccione las columnas que desea procesar y las tranformaciones necesarias.")
         self.content.Add(self.text_instructions, 0, wx.BOTTOM, 10)
         
         h = wx.BoxSizer(wx.HORIZONTAL)
@@ -292,10 +295,11 @@ class Page_ColumnSelector(AeroPage):
         hv = wx.BoxSizer(wx.VERTICAL)
         h.Add(hv, 1, wx.EXPAND, 0)
 
-        self.text_indique = AeroStaticText(self, -1, u"Indique las reglas de transformación que desea aplicar sobre esta columna.")
+#        self.text_indique = AeroStaticText(self, -1, u"Indique las reglas de transformación que desea aplicar sobre esta columna.")
+        self.text_indique = AeroStaticText(self, -1, u"Reglas de transformación para la columna `´")        
         hv.Add(self.text_indique, 0, wx.BOTTOM, 5)
-        self.text_info_adicional = AeroStaticText(self, -1, u"Información adicional: < ALGO VA A DECIR ACA... ALGUN DIA >")
-        hv.Add(self.text_info_adicional, 0, wx.BOTTOM, 5)
+#        self.text_info_adicional = AeroStaticText(self, -1, u"Información adicional: < ALGO VA A DECIR ACA... ALGUN DIA >")
+#        hv.Add(self.text_info_adicional, 0, wx.BOTTOM, 5)
         self.transformations_grid = wx.grid.Grid(self, -1, (-1, -1), (500, 300))
         hv.Add(self.transformations_grid, 0, wx.EXPAND)
         text = AeroStaticText(self, -1, u"NOTA: Si un valor no coincide con ninguna de las reglas, el mismo quedará igual.")
@@ -322,7 +326,7 @@ class Page_ColumnSelector(AeroPage):
         if event.GetShow():
             
             column_count = data['source'].session.query(data['selected']['table']).count()
-            self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].name))
+            self.text_info.SetLabel(u"Se encontraron %d registros en la tabla `%s´." % (column_count, data['selected']['table'].name))
             
             columns = [c.name for c in data['selected']['table'].columns]
             columns.sort()
@@ -345,7 +349,7 @@ class Page_ColumnSelector(AeroPage):
         if event.GetString():
             self.button_preview.SetValue(False)
             
-            self.text_indique.SetLabel(u"Indique las reglas de transformación que desea aplicar sobre la columna <%s>." % event.GetString())
+            self.text_indique.SetLabel(u"Reglas de transformación para la columna `%s´." % event.GetString())
             
             self.transformations_grid.Show()
             self.dummy_panel.Hide()
