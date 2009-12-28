@@ -325,6 +325,7 @@ class Page_ColumnSelector(AeroPage):
             self.text_instructions.SetLabel(u"Se encontraron %d registros en la tabla %s.\nSeleccione las columnas que desea procesar y las tranformaciones necesarias." % (column_count, data['selected']['table'].name))
             
             columns = [c.name for c in data['selected']['table'].columns]
+            columns.sort()
             #self.column_list.SetSelection(0, False)
             self.column_list.Set(columns)
             # inicializar tablas de transformación
