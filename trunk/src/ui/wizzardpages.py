@@ -505,17 +505,29 @@ class Page_ProcessData(AeroPage):
         self.graph_bitmap = wx.StaticBitmap(spanel, -1)
         tabs.AddPage(spanel, "Grafo de Reglas")
 
-        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-        tabs.AddPage(blah, "Item Sets Aceptados")
+        self.item_sets_aceptados = wx.ListCtrl(tabs, -1, style=wx.LC_REPORT)
+        for i, par in enumerate([("Item Set", 450), ("Soporte",wx.LIST_AUTOSIZE_USEHEADER)]):
+            self.item_sets_aceptados.InsertColumn(i, par[0])
+            self.item_sets_aceptados.SetColumnWidth(i,par[1])
+        tabs.AddPage(self.item_sets_aceptados, "Item Sets Aceptados")
 
-        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-        tabs.AddPage(blah, "Item Sets Rechazados")
+        self.item_sets_rechazados = wx.ListCtrl(tabs, -1, style=wx.LC_REPORT)
+        for i, par in enumerate([("Item Set", 450), ("Soporte",wx.LIST_AUTOSIZE_USEHEADER)]):
+            self.item_sets_rechazados.InsertColumn(i, par[0])
+            self.item_sets_rechazados.SetColumnWidth(i,par[1])
+        tabs.AddPage(self.item_sets_rechazados, "Item Sets Rechazados")
 
-        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-        tabs.AddPage(blah, "Reglas Aceptadas")
+        self.reglas_aceptadas = wx.ListCtrl(tabs, -1, style=wx.LC_REPORT)
+        for i, par in enumerate([("A", 185), ("B", 185), ("Confianza",wx.LIST_AUTOSIZE_USEHEADER), ("Sensibilidad",wx.LIST_AUTOSIZE_USEHEADER)]):
+            self.reglas_aceptadas.InsertColumn(i, par[0])
+            self.reglas_aceptadas.SetColumnWidth(i,par[1])
+        tabs.AddPage(self.reglas_aceptadas, "Reglas Aceptadas")
         
-        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
-        tabs.AddPage(blah, "Reglas Rechazadas")
+        self.reglas_rechazadas = wx.ListCtrl(tabs, -1, style=wx.LC_REPORT)
+        for i, par in enumerate([("A", 185), ("B", 185), ("Confianza",wx.LIST_AUTOSIZE_USEHEADER), ("Sensibilidad",wx.LIST_AUTOSIZE_USEHEADER)]):
+            self.reglas_rechazadas.InsertColumn(i, par[0])
+            self.reglas_rechazadas.SetColumnWidth(i,par[1])
+        tabs.AddPage(self.reglas_rechazadas, "Reglas Rechazadas")
         
         self.content.Add(tabs, 0, wx.BOTTOM, 10)
         
@@ -609,19 +621,32 @@ class Page_ProcessData(AeroPage):
         prueba = Nucleo()
         # generar item sets
         prueba.minimumReq(data['transformed'],min=data['parameters']['support_min'],max=data['parameters']['support_max'])
-        print "Item sets generados:"
+#        print "Item sets generados:"
+#        for i in prueba.item_sets:
+#            print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
+#        print "----------"
+        #self.item_sets_aceptados.ClearAll()
         for i in prueba.item_sets:
-            print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
-        print "----------"
+            index = self.item_sets_aceptados.InsertStringItem(100, "{%s}" % ",".join(i.valor))
+            self.item_sets_aceptados.SetStringItem(index, 1, str(i.porcentaje))
         # generar reglas
         prueba.generarReglas(data['parameters']['trust'], data['parameters']['sensibility'])
-        print "Reglas generadas:"
+#        print "Reglas generadas:"
+#        for i in prueba.reglas:
+#            i.imprimir2()
         for i in prueba.reglas:
-            i.imprimir2()
+            index = self.reglas_aceptadas.InsertStringItem(100, "{%s}" % ",".join(i.izq))
+            self.reglas_aceptadas.SetStringItem(index, 1, "{%s}" % ",".join(i.der))
+            self.reglas_aceptadas.SetStringItem(index, 2, str(i.confianza))
+            self.reglas_aceptadas.SetStringItem(index, 3, str(i.sensibilidad))
+
 
         # generar el grafo de las reglas
         self.graph = Graphing()
-        self.graph.graph_rules(prueba.reglas)
+        if len(prueba.reglas) > 50:
+            print "* Se generaron demasiadas reglas y el gráfico no tendrá sentido, intente afinar los parámetros del algoritmo."
+        else:
+            self.graph.graph_rules(prueba.reglas)
             
         return True
             
