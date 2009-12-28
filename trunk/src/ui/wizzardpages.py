@@ -504,6 +504,18 @@ class Page_ProcessData(AeroPage):
         spanel.SetBackgroundColour("#ffffff")
         self.graph_bitmap = wx.StaticBitmap(spanel, -1)
         tabs.AddPage(spanel, "Grafo de Reglas")
+
+        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        tabs.AddPage(blah, "Item Sets Aceptados")
+
+        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        tabs.AddPage(blah, "Item Sets Rechazados")
+
+        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        tabs.AddPage(blah, "Reglas Aceptadas")
+        
+        blah = wx.TextCtrl(tabs, -1, "", size=(550, 250), style=wx.TE_MULTILINE|wx.TE_PROCESS_ENTER)
+        tabs.AddPage(blah, "Reglas Rechazadas")
         
         self.content.Add(tabs, 0, wx.BOTTOM, 10)
         
