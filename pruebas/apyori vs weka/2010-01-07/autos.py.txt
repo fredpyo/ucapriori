@@ -1,0 +1,51 @@
+{engine-location=front, body-style=wagon} --> {num-of-doors=four} :: Confianza=1.000, Sensibilidad=0.219
+{num-of-doors=four, drive-wheels=rwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.193
+{aspiration=std, body-style=sedan} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.386
+{aspiration=std, body-style=hatchback} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.282
+{aspiration=std, body-style=hatchback, num-of-doors=two, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.149
+{num-of-doors=two} --> {engine-location=front} :: Confianza=0.966, Sensibilidad=0.426
+{aspiration=std, num-of-doors=two} --> {engine-location=front} :: Confianza=0.960, Sensibilidad=0.356
+{drive-wheels=rwd} --> {engine-location=front} :: Confianza=0.961, Sensibilidad=0.361
+{body-style=hatchback} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.347
+{aspiration=std, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.515
+{num-of-doors=two, drive-wheels=rwd} --> {engine-location=front} :: Confianza=0.919, Sensibilidad=0.168
+{body-style=sedan} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.475
+{make=toyota} --> {engine-location=front, aspiration=std} :: Confianza=0.969, Sensibilidad=0.188
+{num-of-doors=four, drive-wheels=fwd} --> {engine-location=front, aspiration=std} :: Confianza=0.912, Sensibilidad=0.376
+{aspiration=std, num-of-doors=two, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.203
+{body-style=sedan, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.282
+{aspiration=std, body-style=sedan, drive-wheels=rwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.129
+{aspiration=std, num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.455
+{aspiration=std, body-style=sedan, num-of-doors=four, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.198
+{body-style=hatchback, num-of-doors=two} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.297
+{engine-location=front, num-of-doors=four, drive-wheels=fwd} --> {aspiration=std} :: Confianza=0.912, Sensibilidad=0.369
+{body-style=hatchback, num-of-doors=two, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.193
+{aspiration=std, num-of-doors=four, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.307
+{aspiration=std, body-style=sedan, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.248
+{engine-location=front, make=toyota} --> {aspiration=std} :: Confianza=0.969, Sensibilidad=0.185
+{make=toyota} --> {aspiration=std} :: Confianza=0.969, Sensibilidad=0.185
+{make=toyota} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.158
+{drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.594
+{aspiration=std, num-of-doors=four, drive-wheels=rwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.124
+{aspiration=std, drive-wheels=rwd} --> {engine-location=front} :: Confianza=0.948, Sensibilidad=0.272
+{num-of-doors=four, drive-wheels=fwd} --> {aspiration=std} :: Confianza=0.912, Sensibilidad=0.369
+{num-of-doors=four, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.337
+{aspiration=std} --> {engine-location=front} :: Confianza=0.982, Sensibilidad=0.817
+{aspiration=turbo} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.183
+{aspiration=std, num-of-doors=two, drive-wheels=rwd} --> {engine-location=front} :: Confianza=0.909, Sensibilidad=0.149
+{aspiration=std, body-style=hatchback, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.198
+{aspiration=std, make=toyota} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.153
+{aspiration=turbo, num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.109
+{body-style=wagon} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.124
+{body-style=wagon} --> {engine-location=front, num-of-doors=four} :: Confianza=1.000, Sensibilidad=0.219
+{body-style=wagon} --> {num-of-doors=four} :: Confianza=1.000, Sensibilidad=0.219
+{aspiration=std, body-style=hatchback, num-of-doors=two} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.233
+{body-style=sedan, num-of-doors=four, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.228
+{body-style=hatchback, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.243
+{body-style=sedan, num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.391
+{num-of-doors=two, drive-wheels=fwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.248
+{body-style=sedan, num-of-doors=four, drive-wheels=rwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.149
+{body-style=wagon, num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.124
+{aspiration=std, body-style=sedan, num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.307
+{body-style=sedan, drive-wheels=rwd} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.178
+{num-of-doors=four} --> {engine-location=front} :: Confianza=1.000, Sensibilidad=0.564
