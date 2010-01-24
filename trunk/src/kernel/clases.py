@@ -27,7 +27,7 @@ class Nucleo:
         self.reglas_rechazadas=[]
         self.popular=[]
         
-    def minimumReq(self,datos={},min=1, max=1, verbose=True):
+    def minimumReq(self,datos={},min=0, max=1, verbose=True):
         '''variables son la lista de variables = ['x1','x2','x3'....]
            data es toda la lista de la BD 
            min el el minimo de requerimiento 0...1 '''
@@ -167,6 +167,8 @@ class Nucleo:
                         
                         if nueva_regla.confianza > trust and nueva_regla.sensibilidad > sensibility: # minima confiaza and minima sensibilidad
                             self.reglas.append(nueva_regla)
+                        else:
+                            self.reglas_rechazadas.append(nueva_regla)
 
         if verbose:
             end = datetime.datetime.now()
