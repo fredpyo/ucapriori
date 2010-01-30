@@ -14,8 +14,10 @@ import wx.lib.delayedresult as delayedresult
 import wx.lib.scrolledpanel as scrolledpanel
 
 from data import SQLDataSource
+from data.arff2sqlite import Arff2Sqlite
 from data.gridtables import PreviewTable, TransformationTable
 from data.transformations import Transformer
+
 from graphing import Graphing
 from wxjikken.aerowizard import *
 
@@ -58,7 +60,7 @@ class Page_DataOrigin(AeroPage):
         self.GoToNext()
     
     def OnButtonWeka(self, event):
-        self.wizard.route = 'weka'
+        self.wizard.route = 'arff'
         self.GoToNext()
         
     def GetNext(self):
@@ -160,22 +162,36 @@ class Page_DatabaseSelector(AeroPage):
         text = AeroStaticText(self, -1, u"Seleccione el tipo de base de datos a la que se conectará\ny los parámetros necesarios para la conexión.")
         self.content.Add(text, 0, wx.BOTTOM, 10)
         
-        """
-        self.combo_db = wx.ComboBox(self, -1, "seleccione...", (15, 30), wx.DefaultSize, basesdedatos, wx.CB_DROPDOWN | wx.CB_READONLY | wx.CB_SORT)
-        self.content.Add(self.combo_db, 0, wx.ALL, 10)
-        """
         self.database_choice_book = DatabaseChoiceBook(self, -1)
         self.content.Add(self.database_choice_book, 0, wx.EXPAND | wx.BOTTOM, 10)
     
     def OnNext(self):
-        print data
         data.update(self.database_choice_book.GetValues())
-        print data
         return True
     
     def Test(self, event):
         print self.database_choice_book.GetValues()
         
+        
+class Page_ArffSelector(AeroPage):
+    '''
+    Página para seleccionar el archivo ARFF origen
+    '''
+    def __init__(self, parent):
+        AeroPage.__init__(self, parent, u"Obtener datos de ARFF")
+        
+        text = AeroStaticText(self, -1, u"Indique la ubicación del archivo Arff para que sea cargado al sistema.")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.arff_selector = filebrowse.FileBrowseButton(self, -1, labelText= "Archivo:", buttonText="Seleccionar...", dialogTitle=u"Seleccione el archivo Arff", fileMode = wx.OPEN, toolTip = u"Archivo en formato Arff del cual se extraerán los datos.", startDirectory=wx.StandardPaths.Get().GetDocumentsDir(), fileMask="Arff (*.arff)|*.arff|Todos|*.*")
+        self.content.Add(self.arff_selector, 0, wx.EXPAND | wx.BOTTOM, 10)
+        
+    def OnNext(self):
+        val = {}
+        val['name'] = 'arff'
+        val['arff_file'] = self.arff_selector.GetValue()
+        data.update(val)
+        return True
         
 class Page_Connecting(AeroPage):
     '''
@@ -228,10 +244,75 @@ class Page_Connecting(AeroPage):
     def _ConnectWorker(self, jobID, abortEvent):
         data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
         data['source'].connect()
-        print dir(data['source'])
         return True
 
+class Page_ArffParsing(AeroPage):
+    '''
+    Página intermedio para el parseo del .arff
+    '''
+    def __init__(self, parent):
+        import tempfile
+        AeroPage.__init__(self, parent, u"Parseando archivo")
+        
+        text = AeroStaticText(self, -1, u"Intendando abrir el archivo arff...")
+        self.content.Add(text, 0, wx.BOTTOM, 10)
+        
+        self.gauge = wx.Gauge(self, -1, 50)
+        self.content.Add(self.gauge, 0, wx.EXPAND | wx.ALIGN_CENTER | wx.BOTTOM, 10)
+        # gague timer
+        self.Bind(wx.EVT_TIMER, self.TimerHandler)
+        self.timer = wx.Timer(self)
+        # threading
+        self.abort_event = delayedresult.AbortEvent()
+        # crear archivo temporal
+        self.temp_dir = tempfile.mkdtemp() 
 
+    def TimerHandler(self, event):
+        self.gauge.Pulse()
+
+    def OnNext(self):
+        self.timer.Stop()
+        return True
+    
+    def OnPrev(self):
+        self.timer.Stop()
+        return True
+
+    def OnShow(self, event):
+        if event.GetShow():
+            self.abort_event.clear()
+            self.worker = delayedresult.startWorker(self._Consumer, self._ConnectWorker, wargs=(10,self.abort_event), jobID=10)
+            self.timer.Start(50)
+
+    def _Consumer(self, delayedResult):
+        jobID = delayedResult.getJobID()
+        try:
+            convert_success = delayedResult.get()
+        except Exception, exc:
+            wx.MessageBox(u"Error de conversión:\n%s" % exc, u"Error de Conversión", wx.OK | wx.ICON_ERROR, self)
+            #print "Error thread: %d expection: %s" % (jobID, exc)
+            convert_success = False 
+        if convert_success:
+            self.GoToNext()
+        else:
+            self.GoToPrev()
+
+    def _ConnectWorker(self, jobID, abortEvent):
+        # parsear archivo arff y guardar el sqlite en un archivo temporal
+        parser = Arff2Sqlite(data['arff_file'])
+        parser.parse()
+        parser.to_sqlite(self.temp_dir + "converted.db", False)
+        # armar el string de conexión de sqlalchemy
+        data['sqlalchemy_string'] = "sqlite:///%s" % (self.temp_dir + "converted.db")
+        data['parameters'] = {}
+        # conectarse
+        data['source'] = SQLDataSource(data['sqlalchemy_string'], data['parameters'])
+        data['source'].connect()
+        # indicar la tabla a usar (unica en el arff)
+        print "(" + list(data['source'].get_tables())[0].name + ")"
+        data['selected']['table'] = list(data['source'].get_tables())[0]
+        print data
+        return True
 
 class Page_TableSelector(AeroPage):
     '''
@@ -271,6 +352,9 @@ class Page_TableSelector(AeroPage):
 
     def OnPrev(self):
         data['selected']['table'] = None
+        
+    def GetPrev(self):
+        return None
 
 
 class Page_ColumnSelector(AeroPage):
@@ -308,9 +392,11 @@ class Page_ColumnSelector(AeroPage):
         hvh = wx.BoxSizer(wx.HORIZONTAL)
         button_add = wx.Button(self, -1, "Agregar")
         button_remove = wx.Button(self, -1, "Quitar")
+        button_auto = wx.Button(self, -1, "Aplicar Filtro...")
         self.button_preview = wx.ToggleButton(self, -1, "Previsualizar")
         hvh.Add(button_add, 0, 0)
         hvh.Add(button_remove, 0, 0)
+        hvh.Add(button_auto, 0, 0)
         hvh.AddStretchSpacer(1)
         hvh.Add(self.button_preview, 0, wx.ALIGN_RIGHT, 0)
         hv.Add(hvh, 0, wx.EXPAND, 0)
@@ -393,6 +479,13 @@ class Page_ColumnSelector(AeroPage):
         # guardar las columnas seleccionadas
         data['selected']['columns'] = self.column_list.GetCheckedStrings()
         return True
+    
+    def GetPrev(self):
+        if self.wizard.route == "arff":
+            return None
+        else:
+            return self._GetPrevOrDefault()
+
             
 
 class Page_ConfigureApriori(AeroPage):
@@ -621,25 +714,27 @@ class Page_ProcessData(AeroPage):
         prueba = Nucleo()
         # generar item sets
         prueba.minimumReq(data['transformed'],min=data['parameters']['support_min'],max=data['parameters']['support_max'])
-#        print "Item sets generados:"
-#        for i in prueba.item_sets:
-#            print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
-#        print "----------"
-        #self.item_sets_aceptados.ClearAll()
+        print "Item sets generados:"
         for i in prueba.item_sets:
-            index = self.item_sets_aceptados.InsertStringItem(100, "{%s}" % ",".join(i.valor))
-            self.item_sets_aceptados.SetStringItem(index, 1, str(i.porcentaje))
+            print "%s :: Soporte=%.3f" % (i.valor ,i.porcentaje)
+        print "----------"
+#        for item_sets_listctrl, item_sets in [(self.item_sets_aceptados,prueba.item_sets),(self.item_sets_rechazados,prueba.item_sets_rechazados)]:
+#            #item_sets_listctrl.ClearAll()
+#            for i in item_sets:
+#                index = item_sets_listctrl.InsertStringItem(100, "{%s}" % ",".join(i.valor))
+#                item_sets_listctrl.SetStringItem(index, 1, str(i.porcentaje))
+
         # generar reglas
         prueba.generarReglas(data['parameters']['trust'], data['parameters']['sensibility'])
-#        print "Reglas generadas:"
-#        for i in prueba.reglas:
-#            i.imprimir2()
+        print "Reglas generadas:"
         for i in prueba.reglas:
-            index = self.reglas_aceptadas.InsertStringItem(100, "{%s}" % ",".join(i.izq))
-            self.reglas_aceptadas.SetStringItem(index, 1, "{%s}" % ",".join(i.der))
-            self.reglas_aceptadas.SetStringItem(index, 2, str(i.confianza))
-            self.reglas_aceptadas.SetStringItem(index, 3, str(i.sensibilidad))
-
+            i.imprimir2()
+#        for reglas_listctrl, reglas_list in [(self.reglas_aceptadas, prueba.reglas),(self.reglas_rechazadas, prueba.reglas_rechazadas)]: 
+#            for i in reglas_list:
+#                index = reglas_listctrl.InsertStringItem(100, "{%s}" % ",".join(i.izq))
+#                reglas_listctrl.SetStringItem(index, 1, "{%s}" % ",".join(i.der))
+#                reglas_listctrl.SetStringItem(index, 2, str(i.confianza))
+#                reglas_listctrl.SetStringItem(index, 3, str(i.sensibilidad))
 
         # generar el grafo de las reglas
         self.graph = Graphing()
